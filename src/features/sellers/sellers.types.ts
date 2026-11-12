@@ -52,6 +52,21 @@ export type Seller = {
   documents: KybDocument[];
   reviewNote?: string | null;
   createdAt: string;
+  /** Storefront brand page is /brands/{slug}. */
+  slug?: string;
+  logoUrl?: string | null;
+  /** Average buyer rating and number of ratings, shown on the home banner. */
+  rating?: number | null;
+  reviewCount?: number | null;
+  /** Sale the seller is running from the seller portal; such brands can fill the home banner. */
+  activeSale?: SellerSale | null;
+};
+
+export type SellerSale = {
+  title: string;
+  discountPercent: number;
+  startsAt: string;
+  endsAt: string;
 };
 
 export type SellersFilter = {

@@ -46,12 +46,12 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Categories", icon: FolderTree, href: "/categories", ready: true },
   { label: "Sellers", icon: Store, href: "/sellers", ready: true },
   { label: "Products", icon: Package, href: "/products", ready: true },
-  { label: "Users", icon: Users, href: "/users" },
-  { label: "Orders", icon: ShoppingBag, href: "/orders" },
-  { label: "Tier Management", icon: Layers, href: "/tiers" },
-  { label: "Staff", icon: UserCog, href: "/staff" },
-  { label: "Roles & Permissions", icon: ShieldCheck, href: "/roles" },
-  { label: "Settings", icon: Settings, href: "/settings" },
+  { label: "Users", icon: Users, href: "/users", ready: true },
+  { label: "Orders", icon: ShoppingBag, href: "/orders", ready: true },
+  { label: "Tier Management", icon: Layers, href: "/tiers", ready: true },
+  { label: "Staff", icon: UserCog, href: "/staff", ready: true },
+  { label: "Roles & Permissions", icon: ShieldCheck, href: "/roles", ready: true },
+  { label: "Settings", icon: Settings, href: "/settings", ready: true },
 ];
 
 /* ---------------- SIDEBAR ---------------- */

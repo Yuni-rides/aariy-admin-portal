@@ -9,6 +9,12 @@ const PROTECTED_PREFIXES = [
   "/categories",
   "/sellers",
   "/products",
+  "/users",
+  "/orders",
+  "/tiers",
+  "/settings",
+  "/staff",
+  "/roles",
   "/profile",
   // TODO: remove once the old Arigo modules are deleted
   "/nemt",

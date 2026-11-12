@@ -28,16 +28,25 @@ import { ProductVariant, SaveProductDto, SizeChartRow } from "../products.types"
 import {
   AFTER_SAVE_OPTIONS,
   MAX_PRODUCT_IMAGES,
+  META_DESCRIPTION_MAX,
+  META_TITLE_MAX,
+  defaultMetaDescription,
+  defaultMetaTitle,
   newVariantId,
+  productSlug,
+  productUrl,
 } from "../products.helpers";
+import { SeoPreview } from "./SeoPreview";
 
 type ProductFormPageProps = {
   /** Present when editing an existing product. */
   productId?: string;
 };
 
-type FormState = Omit<SaveProductDto, "dispatchLeadTimeDays"> & {
+type FormState = Omit<SaveProductDto, "dispatchLeadTimeDays" | "metaTitle" | "metaDescription"> & {
   dispatchLeadTimeDays: string;
+  metaTitle: string;
+  metaDescription: string;
 };
 
 const emptyVariant = (): ProductVariant => ({
@@ -61,6 +70,8 @@ const EMPTY: FormState = {
   images: [],
   sizeChart: [],
   status: "APPROVED",
+  metaTitle: "",
+  metaDescription: "",
 };
 
 const labelClass = "mb-1.5 block text-[13px] font-normal text-muted-foreground";
@@ -99,6 +110,8 @@ export default function ProductFormPage({ productId }: ProductFormPageProps) {
         images: product.images.filter(Boolean),
         sizeChart: product.sizeChart,
         status: "APPROVED",
+        metaTitle: product.metaTitle ?? "",
+        metaDescription: product.metaDescription ?? "",
       });
       setDirty(false);
     }
@@ -117,6 +130,12 @@ export default function ProductFormPage({ productId }: ProductFormPageProps) {
     setDirty(true);
     setForm((f) => ({ ...f, [key]: value }));
   };
+
+  const sellerName = allSellers.find((b) => b.id === form.sellerId)?.name ?? "";
+
+  /** The product's URL: its saved slug, or (new product) what the backend will most likely make. */
+  const slugPreview =
+    isEdit && product ? product.slug : form.name.trim() ? productSlug(sellerName, form.name) : "";
 
   const updateVariant = (id: string, changes: Partial<ProductVariant>) =>
     update(
@@ -148,6 +167,10 @@ export default function ProductFormPage({ productId }: ProductFormPageProps) {
     if (!form.sellerId) next.sellerId = "Choose a seller";
     if (!form.name.trim()) next.name = "Product name is required";
     if (!form.categoryId) next.categoryId = "Choose a last-level category";
+    if (form.metaTitle.trim().length > META_TITLE_MAX)
+      next.metaTitle = `Keep it to ${META_TITLE_MAX} characters`;
+    if (form.metaDescription.trim().length > META_DESCRIPTION_MAX)
+      next.metaDescription = `Keep it to ${META_DESCRIPTION_MAX} characters`;
     if (!form.variants.length) next.variants = "Add at least one variant";
     else if (form.variants.some((v) => !v.size.trim() || !v.sku.trim() || v.price <= 0))
       next.variants = "Each variant needs a size, SKU and a price above 0";
@@ -168,13 +191,15 @@ export default function ProductFormPage({ productId }: ProductFormPageProps) {
       ...form,
       status,
       name: form.name.trim(),
+      metaTitle: form.metaTitle.trim() || undefined,
+      metaDescription: form.metaDescription.trim() || undefined,
       material: form.material?.trim() || undefined,
       dispatchLeadTimeDays: form.dispatchLeadTimeDays
         ? Number(form.dispatchLeadTimeDays)
         : undefined,
     };
     const meta = {
-      sellerName: allSellers.find((b) => b.id === dto.sellerId)?.name ?? "",
+      sellerName,
       categoryName: categories.find((c) => c.id === dto.categoryId)?.name ?? "",
     };
     const res = isEdit
@@ -335,6 +360,70 @@ export default function ProductFormPage({ productId }: ProductFormPageProps) {
               <Plus /> Add variant
             </Button>
           </Card>
+
+          {/* Search engine listing */}
+          <Card className="flex flex-col gap-4 rounded-2xl p-[18px] shadow-none">
+            <div>
+              <h2 className="text-[15px] font-semibold">Search engine listing</h2>
+              <p className="text-[13px] text-muted-foreground">
+                How this product shows on Google and when its link is shared. Leave the meta fields empty to use the
+                product name and description.
+              </p>
+            </div>
+
+            <SeoPreview
+              slug={slugPreview}
+              title={form.metaTitle.trim() || defaultMetaTitle(form.name, sellerName)}
+              description={form.metaDescription.trim() || defaultMetaDescription(form.description)}
+            />
+
+            <div>
+              <p className={labelClass}>Product URL</p>
+              <div className="flex min-h-11 items-center gap-2 rounded-[10px] border border-input bg-muted/60 px-3 py-2 text-sm">
+                <span id="p-slug" className="min-w-0 flex-1 break-all text-foreground">
+                  aariee.com/products/
+                  <span className={isEdit ? "font-medium" : "text-muted-foreground"}>
+                    {slugPreview || "seller-product-name"}
+                  </span>
+                </span>
+                {isEdit && product?.status === "APPROVED" && (
+                  <a
+                    href={productUrl(product.slug)}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="shrink-0 text-xs text-primary hover:underline"
+                  >
+                    Open
+                  </a>
+                )}
+              </div>
+              <p className="mt-1 text-xs text-muted-foreground">
+                {isEdit
+                  ? "Set automatically and stays the same when the product is renamed."
+                  : "Set automatically from the seller and product name when you save."}
+              </p>
+            </div>
+
+            <CountedField
+              id="p-meta-title"
+              label="Meta title"
+              max={META_TITLE_MAX}
+              value={form.metaTitle}
+              placeholder={defaultMetaTitle(form.name, sellerName) || "Product name by Seller"}
+              error={errors.metaTitle}
+              onChange={(v) => update("metaTitle", v)}
+            />
+            <CountedField
+              id="p-meta-description"
+              label="Meta description"
+              max={META_DESCRIPTION_MAX}
+              multiline
+              value={form.metaDescription}
+              placeholder={defaultMetaDescription(form.description) || "A short line that makes people click"}
+              error={errors.metaDescription}
+              onChange={(v) => update("metaDescription", v)}
+            />
+          </Card>
         </div>
 
         <div className="flex flex-col gap-4">
@@ -468,6 +557,56 @@ export default function ProductFormPage({ productId }: ProductFormPageProps) {
           </Card>
         </div>
       </div>
+    </div>
+  );
+}
+
+type CountedFieldProps = {
+  id: string;
+  label: string;
+  max: number;
+  value: string;
+  placeholder?: string;
+  error?: string;
+  multiline?: boolean;
+  onChange: (value: string) => void;
+};
+
+/** Text field with a live character count that turns red past the limit. */
+function CountedField({ id, label, max, value, placeholder, error, multiline, onChange }: CountedFieldProps) {
+  const length = value.trim().length;
+  const over = length > max;
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center justify-between gap-2">
+        <Label htmlFor={id} className="text-[13px] font-normal text-muted-foreground">
+          {label} <span className="text-muted-foreground/70">(optional)</span>
+        </Label>
+        <span className={`text-xs tabular-nums ${over ? "font-medium text-destructive" : "text-muted-foreground"}`}>
+          {length}/{max}
+        </span>
+      </div>
+      {multiline ? (
+        <Textarea
+          id={id}
+          rows={3}
+          className="rounded-[10px] bg-white"
+          value={value}
+          placeholder={placeholder}
+          aria-invalid={over || !!error}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      ) : (
+        <Input
+          id={id}
+          className={inputClass}
+          value={value}
+          placeholder={placeholder}
+          aria-invalid={over || !!error}
+          onChange={(e) => onChange(e.target.value)}
+        />
+      )}
+      {error && <p className="mt-1 text-xs text-destructive">{error}</p>}
     </div>
   );
 }

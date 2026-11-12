@@ -1,6 +1,11 @@
 import { create } from "zustand";
 import { Product, ProductsFilter, SaveProductDto } from "./products.types";
 import { PRODUCTS_MOCK } from "./products.mock";
+import {
+  META_DESCRIPTION_MAX,
+  META_TITLE_MAX,
+  productSlug,
+} from "./products.helpers";
 
 type Result = { success: boolean; message: string };
 
@@ -44,6 +49,36 @@ const applyFilter = (list: Product[], filter?: ProductsFilter, search?: string) 
         p.name.toLowerCase().includes(q) ||
         p.variants.some((v) => v.sku.toLowerCase().includes(q))),
   );
+};
+
+/**
+ * Stand-in for what the backend does on save: checks the meta fields, creates a
+ * unique slug for a new product (an existing product keeps its slug), and drops
+ * empty meta fields so the storefront uses its defaults.
+ */
+const checkSeo = (
+  dto: SaveProductDto,
+  others: Product[],
+  meta: SaveMeta,
+  /** Slug the product already has (edit only); it never changes. */
+  currentSlug?: string,
+): { error: string } | { seo: Pick<Product, "slug" | "metaTitle" | "metaDescription"> } => {
+  const metaTitle = dto.metaTitle?.trim() || undefined;
+  const metaDescription = dto.metaDescription?.replace(/\s+/g, " ").trim() || undefined;
+  const taken = (s: string) => others.some((p) => p.slug === s);
+
+  let slug = currentSlug ?? "";
+  if (!slug) {
+    // TODO(api): the backend does this; remove once products.api.ts is wired in.
+    const base = productSlug(meta.sellerName, dto.name) || "product";
+    slug = base;
+    for (let n = 2; taken(slug); n++) slug = `${base}-${n}`;
+  }
+  if (metaTitle && metaTitle.length > META_TITLE_MAX)
+    return { error: `Meta title must be ${META_TITLE_MAX} characters or fewer` };
+  if (metaDescription && metaDescription.length > META_DESCRIPTION_MAX)
+    return { error: `Meta description must be ${META_DESCRIPTION_MAX} characters or fewer` };
+  return { seo: { slug, metaTitle, metaDescription } };
 };
 
 export const useProductsStore = create<ProductsStore>((set, get) => {
@@ -109,6 +144,8 @@ export const useProductsStore = create<ProductsStore>((set, get) => {
     },
 
     createProduct: async (dto, meta) => {
+      const check = checkSeo(dto, source(), meta);
+      if ("error" in check) return { success: false, message: check.error };
       set({ saving: true });
       // TODO(api): const res = await productsApi.createProduct(dto);
       const id = `p-${Date.now()}`;
@@ -116,6 +153,7 @@ export const useProductsStore = create<ProductsStore>((set, get) => {
         {
           ...dto,
           ...meta,
+          ...check.seo,
           id,
           addedBy: "STAFF",
           rejectionReason: null,
@@ -132,9 +170,12 @@ export const useProductsStore = create<ProductsStore>((set, get) => {
     },
 
     updateProduct: async (id, dto, meta) => {
+      const current = source().find((p) => p.id === id);
+      const check = checkSeo(dto, source().filter((p) => p.id !== id), meta, current?.slug);
+      if ("error" in check) return { success: false, message: check.error };
       set({ saving: true });
       // TODO(api): const res = await productsApi.updateProduct(id, dto);
-      patch(id, { ...dto, ...meta, rejectionReason: null });
+      patch(id, { ...dto, ...meta, ...check.seo, rejectionReason: null });
       set({ saving: false });
       return { success: true, message: "Product updated" };
     },

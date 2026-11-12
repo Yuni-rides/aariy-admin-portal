@@ -38,7 +38,7 @@ export const DASHBOARD_MOCK: DashboardData = {
   attention: [
     { key: "kyb", label: "Seller KYB reviews", value: 5, tone: "warning", href: "/sellers" },
     { key: "products", label: "Product approvals", value: 28, tone: "warning", href: "/products" },
-    { key: "csr", label: "Orders awaiting CSR call", value: 12, tone: "warning" },
+    { key: "csr", label: "Orders awaiting CSR call", value: 12, tone: "warning", href: "/orders" },
     { key: "payout", label: "Payout batch for approval", value: "Month end", tone: "info" },
   ],
 };

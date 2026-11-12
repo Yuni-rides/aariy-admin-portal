@@ -1,6 +1,7 @@
 // TEMPORARY: mock data until the products API is ready.
 // Delete this file once products.api.ts is wired into the store.
 import { Product, ProductVariant, SizeChartRow } from "./products.types";
+import { productSlug } from "./products.helpers";
 
 const variants = (prefix: string, price: number, colour: string): ProductVariant[] =>
   ["S", "M", "L"].map((size, i) => ({
@@ -19,10 +20,15 @@ const SIZE_CHART: SizeChartRow[] = [
   { size: "L", chest: "102", length: "116" },
 ];
 
-export const PRODUCTS_MOCK: Product[] = [
+type MockProduct = Omit<Product, "slug"> & { slug?: string };
+
+const BASE: MockProduct[] = [
   {
     id: "p-1",
     name: "Embroidered lawn 3pc",
+    metaTitle: "Maria B Embroidered Lawn 3 Piece Suit | Summer 2026",
+    metaDescription:
+      "Shop the Maria B embroidered lawn 3 piece suit with chiffon dupatta. Sizes S to L, cash on delivery across Pakistan.",
     sellerId: "maria-b",
     sellerName: "Maria B",
     categoryId: "kurta-set",
@@ -113,8 +119,8 @@ const CATS = [
 ] as const;
 const STATUSES = ["SUBMITTED", "APPROVED", "SUBMITTED", "REJECTED", "APPROVED"] as const;
 
-PRODUCTS_MOCK.push(
-  ...EXTRA_NAMES.map((name, i): Product => {
+BASE.push(
+  ...EXTRA_NAMES.map((name, i): MockProduct => {
     const [sellerId, sellerName, code] = SELLERS[i % SELLERS.length];
     const [categoryId, categoryName] = CATS[i % CATS.length];
     const status = STATUSES[i % STATUSES.length];
@@ -138,3 +144,43 @@ PRODUCTS_MOCK.push(
     };
   }),
 );
+
+// Approved products for the brands used on the home banner.
+const BANNER_PRODUCTS: [string, string, string, number, string][] = [
+  ["zarveen-couture", "Zarveen Couture", "Embroidered saree", 36500, "ZC-SAR"],
+  ["zarveen-couture", "Zarveen Couture", "Organza gharara set", 18500, "ZC-GHR"],
+  ["zarveen-couture", "Zarveen Couture", "Net anarkali", 42500, "ZC-ANR"],
+  ["zarveen-couture", "Zarveen Couture", "Velvet kalidar", 39500, "ZC-KLD"],
+  ["zarveen-couture", "Zarveen Couture", "Chiffon pishwas", 28500, "ZC-PSH"],
+  ["noor-e-saba", "Noor-e-Saba", "Khaddar shawl suit", 9800, "NS-KSS"],
+  ["noor-e-saba", "Noor-e-Saba", "Velvet co-ord", 12500, "NS-VCO"],
+  ["noor-e-saba", "Noor-e-Saba", "Karandi 3pc", 8900, "NS-K3P"],
+  ["noor-e-saba", "Noor-e-Saba", "Marina kurta", 6400, "NS-MRK"],
+];
+
+BASE.push(
+  ...BANNER_PRODUCTS.map(([sellerId, sellerName, name, price, code], i): MockProduct => ({
+    id: `p-b${i + 1}`,
+    name,
+    sellerId,
+    sellerName,
+    categoryId: CATS[i % CATS.length][0],
+    categoryName: CATS[i % CATS.length][1],
+    description: `${name}.`,
+    material: "Chiffon",
+    dispatchLeadTimeDays: 5,
+    variants: variants(code, price, "Assorted"),
+    images: [],
+    sizeChart: SIZE_CHART,
+    addedBy: "SELLER",
+    status: "APPROVED",
+    rejectionReason: null,
+    createdAt: new Date(Date.UTC(2026, 10, 1 + i)).toISOString(),
+  })),
+);
+
+// Slugs follow the storefront pattern: /products/<seller>-<product name>.
+export const PRODUCTS_MOCK: Product[] = BASE.map((p) => ({
+  ...p,
+  slug: p.slug ?? productSlug(p.sellerName, p.name),
+}));

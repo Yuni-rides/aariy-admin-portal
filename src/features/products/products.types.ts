@@ -19,7 +19,25 @@ export type SizeChartRow = {
   length: string;
 };
 
-export type Product = {
+/**
+ * Search engine fields. Empty meta fields fall back on the storefront to
+ * "<name> by <seller>" and the first 155 characters of the description.
+ */
+export type ProductSeo = {
+  /**
+   * Storefront URL: /products/<slug>. Read-only: the backend makes it from
+   * seller + name on create (adding -2, -3… if taken) and keeps it when the
+   * product is renamed.
+   */
+  slug: string;
+  metaTitle?: string;
+  metaDescription?: string;
+};
+
+/** The slug is never sent; the backend owns it. */
+type SaveSeo = Omit<ProductSeo, "slug">;
+
+export type Product = ProductSeo & {
   id: string;
   name: string;
   sellerId: string;
@@ -44,7 +62,7 @@ export type ProductsFilter = {
   categoryId?: string;
 };
 
-export type SaveProductDto = {
+export type SaveProductDto = SaveSeo & {
   name: string;
   sellerId: string;
   categoryId: string;

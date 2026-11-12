@@ -15,7 +15,6 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/Table";
-import { toast } from "@/hooks/useToast";
 import { downloadCsv, formatPKR } from "@/lib/format";
 import { useDashboardStore } from "../dashboard.store";
 import {
@@ -38,13 +37,6 @@ export default function DashboardPage() {
       ["Metric", "Value"],
       STAT_CARDS.map((s) => [s.label, data.stats[s.key]]),
     );
-  };
-
-  const openOrder = (orderNumber: string) => {
-    toast({
-      title: orderNumber,
-      description: "Order details will open here once the Orders module is ready.",
-    });
   };
 
   return (
@@ -125,12 +117,12 @@ export default function DashboardPage() {
                     </TableCell>
                     <TableCell>
                       <Button
+                        asChild
                         variant="secondary"
                         size="sm"
                         className="cursor-pointer rounded-[10px]"
-                        onClick={() => openOrder(order.orderNumber)}
                       >
-                        Open
+                        <Link href={`/orders?order=${order.orderNumber}`}>Open</Link>
                       </Button>
                     </TableCell>
                   </TableRow>
