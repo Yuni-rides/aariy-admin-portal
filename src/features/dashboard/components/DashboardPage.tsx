@@ -35,7 +35,7 @@ export default function DashboardPage() {
     downloadCsv(
       "aariy-dashboard-report.csv",
       ["Metric", "Value"],
-      STAT_CARDS.map((s) => [s.label, data.stats[s.key]]),
+      STAT_CARDS.map((s) => [s.label, data.stats[s.key] ?? ""]),
     );
   };
 
@@ -61,18 +61,31 @@ export default function DashboardPage() {
 
       {/* Stats */}
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-        {STAT_CARDS.map((stat) => (
-          <Card key={stat.key} className="rounded-2xl p-[18px] shadow-none">
-            <div className="text-[13px] text-muted-foreground">{stat.label}</div>
-            {loading || !data ? (
-              <Skeleton className="mt-2 h-8 w-16" />
-            ) : (
-              <div className="text-[28px] font-semibold">
-                {data.stats[stat.key]}
-              </div>
-            )}
-          </Card>
-        ))}
+        {STAT_CARDS.map((stat) => {
+          const value = data?.stats[stat.key];
+          const card = (
+            <Card className="h-full rounded-2xl p-[18px] shadow-none">
+              <div className="text-[13px] text-muted-foreground">{stat.label}</div>
+              {loading || !data ? (
+                <Skeleton className="mt-2 h-8 w-16" />
+              ) : value == null ? (
+                <>
+                  <div className="text-[28px] font-semibold text-muted-foreground">—</div>
+                  <p className="text-xs text-muted-foreground">Refunds page not built yet</p>
+                </>
+              ) : (
+                <div className="text-[28px] font-semibold">{value}</div>
+              )}
+            </Card>
+          );
+          return stat.href ? (
+            <Link key={stat.key} href={stat.href} className="rounded-2xl hover:ring-1 hover:ring-primary/30">
+              {card}
+            </Link>
+          ) : (
+            <div key={stat.key}>{card}</div>
+          );
+        })}
       </div>
 
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-3">

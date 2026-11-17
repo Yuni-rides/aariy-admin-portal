@@ -157,6 +157,15 @@ export function Header() {
 
       <div className="hidden flex-1 lg:flex" />
 
+      {AUTH_BYPASS && (
+        <span
+          className="mr-3 rounded-full bg-[#FFF3D6] px-3 py-1 text-xs font-medium text-[#8A5A00]"
+          title="NEXT_PUBLIC_AUTH_BYPASS is on: any email and password signs in as Test Admin. Turn it off before launch."
+        >
+          Test mode · not for live use
+        </span>
+      )}
+
       <DropdownMenu>
         <DropdownMenuTrigger asChild>
           <Button

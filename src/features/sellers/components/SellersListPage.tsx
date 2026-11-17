@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { Plus, Search } from "lucide-react";
 import { Button } from "@/components/ui/Button";
@@ -154,7 +155,15 @@ export default function SellersListPage() {
                     className={cn("cursor-pointer", seller.id === selectedId && "bg-accent/50")}
                     onClick={() => setSelectedId(seller.id)}
                   >
-                    <TableCell className="font-medium">{seller.name}</TableCell>
+                    <TableCell className="font-medium">
+                      <Link
+                        href={"/sellers/" + seller.id}
+                        className="hover:text-primary hover:underline"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        {seller.name}
+                      </Link>
+                    </TableCell>
                     <TableCell>{seller.legalName}</TableCell>
                     <TableCell>{seller.productCount}</TableCell>
                     <TableCell>{sellerTierLabelMap[seller.tier]}</TableCell>

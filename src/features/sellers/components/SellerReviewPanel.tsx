@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { SensitiveValue } from "@/components/SensitiveValue";
 import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
@@ -66,16 +68,19 @@ export function SellerReviewPanel({ seller, saving, onAction }: SellerReviewPane
         <dt className="text-muted-foreground">Legal entity</dt>
         <dd className="truncate">{seller.legalName}</dd>
         <dt className="text-muted-foreground">Email</dt>
-        <dd className="truncate">{seller.contactEmail}</dd>
+        <dd className="min-w-0"><SensitiveValue value={seller.contactEmail} kind="email" label="seller email" target={`Seller ${seller.name}`} /></dd>
         <dt className="text-muted-foreground">Phone</dt>
-        <dd>{seller.contactPhone || "—"}</dd>
+        <dd className="min-w-0"><SensitiveValue value={seller.contactPhone} kind="phone" label="seller phone" target={`Seller ${seller.name}`} /></dd>
         <dt className="text-muted-foreground">CNIC / SSN</dt>
-        <dd>{seller.idNumber || "—"}</dd>
+        <dd className="min-w-0"><SensitiveValue value={seller.idNumber} kind="id" label="CNIC / SSN" target={`Seller ${seller.name}`} /></dd>
         <dt className="text-muted-foreground">NTN</dt>
-        <dd>{seller.ntnNumber || "—"}</dd>
+        <dd className="min-w-0"><SensitiveValue value={seller.ntnNumber} kind="id" label="NTN" target={`Seller ${seller.name}`} /></dd>
         <dt className="text-muted-foreground">Tier</dt>
         <dd>{sellerTierLabelMap[seller.tier]}</dd>
       </dl>
+      <Link href={"/sellers/" + seller.id} className="text-[13px] font-medium text-primary hover:underline">
+        Full details, orders &amp; payouts →
+      </Link>
 
       <div className="flex flex-col gap-2 border-t pt-3">
         <h3 className="text-[13px] font-semibold">KYB documents</h3>

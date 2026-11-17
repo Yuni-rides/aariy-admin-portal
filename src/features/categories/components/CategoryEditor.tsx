@@ -20,6 +20,7 @@ import { Category, CreateCategoryDto } from "../categories.types";
 import {
   getCategoryPath,
   getParentOptions,
+  getSiblings,
   hasChildren,
 } from "../categories.helpers";
 
@@ -47,6 +48,7 @@ const emptyForm = (parentId: string | null): CreateCategoryDto => ({
   showInMenu: true,
   isActive: true,
   isCurated: false,
+  sortOrder: 1,
 });
 
 export function CategoryEditor({
@@ -63,7 +65,9 @@ export function CategoryEditor({
   const isEdit = !!category;
   const [form, setForm] = useState<CreateCategoryDto>(emptyForm(defaultParentId));
   const [slugTouched, setSlugTouched] = useState(false);
-  const [errors, setErrors] = useState<{ name?: string; slug?: string }>({});
+  /** Until it's typed, a new category goes last under its parent. */
+  const [sortTouched, setSortTouched] = useState(false);
+  const [errors, setErrors] = useState<{ name?: string; slug?: string; sortOrder?: string }>({});
   const fileRef = useRef<HTMLInputElement>(null);
 
   const parentOptions = useMemo(
@@ -82,11 +86,14 @@ export function CategoryEditor({
         showInMenu: category.showInMenu,
         isActive: category.isActive,
         isCurated: category.isCurated,
+        sortOrder: category.sortOrder,
       });
+      setSortTouched(false);
       setSlugTouched(true);
     } else {
       const parentAllowed = parentOptions.some((o) => o.id === defaultParentId);
       setForm(emptyForm(parentAllowed ? defaultParentId : null));
+      setSortTouched(false);
       setSlugTouched(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -98,6 +105,20 @@ export function CategoryEditor({
     : (form.parentId ? getCategoryPath(categories, form.parentId).length : 0) + 1;
   const isLeaf = category ? !hasChildren(categories, category.id) : true;
   const canDelete = isEdit && isLeaf && category!.productCount === 0;
+
+  // Positions available under the chosen parent (one more if this category joins that level).
+  const siblingCount = getSiblings(categories, form.parentId).filter((c) => c.id !== category?.id).length;
+  const maxPosition = siblingCount + 1;
+
+  // Until the field is typed in: an existing category under its own parent keeps its
+  // position; a new category, or one moved to another parent, goes last.
+  useEffect(() => {
+    if (sortTouched) return;
+    setForm((f) => {
+      const target = category && f.parentId === category.parentId ? category.sortOrder : maxPosition;
+      return f.sortOrder === target ? f : { ...f, sortOrder: target };
+    });
+  }, [maxPosition, sortTouched, category]);
 
   const update = <K extends keyof CreateCategoryDto>(
     key: K,
@@ -118,6 +139,8 @@ export function CategoryEditor({
     e.preventDefault();
     const next: typeof errors = {};
     if (!form.name.trim()) next.name = "Name is required";
+    if (!Number.isInteger(form.sortOrder) || form.sortOrder < 1 || form.sortOrder > maxPosition)
+      next.sortOrder = `Use a number from 1 to ${maxPosition}`;
     if (!form.slug.trim()) next.slug = "Slug is required";
     else if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(form.slug))
       next.slug = "Use lowercase letters, numbers and dashes only";
@@ -193,13 +216,18 @@ export function CategoryEditor({
           </div>
         </div>
 
+        <div className="grid gap-4 sm:grid-cols-[1fr_160px]">
         <div>
           <Label className="mb-1.5 block text-[13px] font-normal text-muted-foreground">
             Parent
           </Label>
           <Select
             value={form.parentId ?? ROOT}
-            onValueChange={(v) => update("parentId", v === ROOT ? null : v)}
+            onValueChange={(v) => {
+              update("parentId", v === ROOT ? null : v);
+              // A new parent means a new list of siblings; start at the end of it.
+              setSortTouched(false);
+            }}
           >
             <SelectTrigger className="h-11 cursor-pointer rounded-[10px] bg-white">
               <SelectValue placeholder="Select parent" />
@@ -213,6 +241,34 @@ export function CategoryEditor({
               ))}
             </SelectContent>
           </Select>
+        </div>
+        <div>
+          <Label htmlFor="cat-sort" className="mb-1.5 block text-[13px] font-normal text-muted-foreground">
+            Sort order
+          </Label>
+          <Input
+            id="cat-sort"
+            type="number"
+            min={1}
+            max={maxPosition}
+            step={1}
+            className="h-11 rounded-[10px] bg-white"
+            value={Number.isNaN(form.sortOrder) ? "" : form.sortOrder}
+            onChange={(e) => {
+              setSortTouched(true);
+              update("sortOrder", e.target.value === "" ? NaN : Number(e.target.value));
+            }}
+            aria-invalid={!!errors.sortOrder}
+            aria-describedby="cat-sort-hint"
+          />
+          {errors.sortOrder ? (
+            <p className="mt-1 text-xs text-destructive">{errors.sortOrder}</p>
+          ) : (
+            <p id="cat-sort-hint" className="mt-1 text-xs text-muted-foreground">
+              1 = first, {maxPosition} = last
+            </p>
+          )}
+        </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-3">

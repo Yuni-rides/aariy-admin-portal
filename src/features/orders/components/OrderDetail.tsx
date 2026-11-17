@@ -2,6 +2,9 @@
 
 import { forwardRef, useEffect, useState } from "react";
 import { Phone } from "lucide-react";
+import { SensitiveValue } from "@/components/SensitiveValue";
+import { maskPhone } from "@/lib/mask";
+import { useAuditStore } from "@/features/audit/audit.store";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Label } from "@/components/ui/Label";
@@ -45,6 +48,7 @@ export const OrderDetail = forwardRef<HTMLDivElement, OrderDetailProps>(function
 ) {
   const [note, setNote] = useState("");
   const [cancelTarget, setCancelTarget] = useState<CancelTarget>(null);
+  const logAudit = useAuditStore((s) => s.log);
 
   useEffect(() => {
     setNote("");
@@ -72,9 +76,17 @@ export const OrderDetail = forwardRef<HTMLDivElement, OrderDetailProps>(function
             </h2>
             <p className="text-sm text-muted-foreground">
               Buyer: {order.buyerName} ·{" "}
-              <a href={`tel:${order.contactPhone.replace(/\s/g, "")}`} className="text-foreground hover:text-primary">
-                {order.contactPhone}
-              </a>{" "}
+              <SensitiveValue
+                value={order.contactPhone}
+                kind="phone"
+                label="buyer phone"
+                target={`Order ${order.orderNumber}`}
+                renderRevealed={(v) => (
+                  <a href={`tel:${v.replace(/\s/g, "")}`} className="text-foreground hover:text-primary">
+                    {v}
+                  </a>
+                )}
+              />{" "}
               · {order.address.city}
             </p>
           </div>
@@ -215,8 +227,19 @@ export const OrderDetail = forwardRef<HTMLDivElement, OrderDetailProps>(function
             </div>
             <div className="flex flex-wrap gap-2">
               <Button asChild variant="secondary" className="min-h-11 cursor-pointer rounded-[10px]">
-                <a href={`tel:${order.contactPhone.replace(/\s/g, "")}`}>
-                  <Phone /> {order.contactPhone}
+                <a
+                  href={`tel:${order.contactPhone.replace(/\s/g, "")}`}
+                  title="Calls the buyer; the number stays hidden on screen"
+                  onClick={() =>
+                    logAudit({
+                      category: "DATA_ACCESS",
+                      action: "Called buyer",
+                      target: `Order ${order.orderNumber}`,
+                      reason: "Order confirmation call",
+                    })
+                  }
+                >
+                  <Phone /> Call {maskPhone(order.contactPhone)}
                 </a>
               </Button>
               {CALL_OUTCOME_ACTIONS.map(({ outcome, label }) => (

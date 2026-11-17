@@ -1,4 +1,5 @@
 "use client";
+import { maskEmail, maskPhone } from "@/lib/mask";
 
 import { useEffect, useState } from "react";
 import { Download, Search } from "lucide-react";
@@ -101,7 +102,7 @@ export default function UsersListPage() {
       ["Name", "Email", "Mobile", "Type", "Orders", "Status", "Joined"],
       users.map((u) => [
         u.name,
-        u.email,
+        maskEmail(u.email),
         u.mobile,
         userTypeLabelMap[u.type],
         u.ordersCount,
@@ -218,9 +219,9 @@ export default function UsersListPage() {
                     >
                       <TableCell>
                         <p className="font-medium">{u.name}</p>
-                        <p className="max-w-[220px] truncate text-xs text-muted-foreground">{u.email}</p>
+                        <p className="max-w-[220px] truncate text-xs text-muted-foreground">{maskEmail(u.email)}</p>
                       </TableCell>
-                      <TableCell className="whitespace-nowrap">{u.mobile}</TableCell>
+                      <TableCell className="whitespace-nowrap tabular-nums">{maskPhone(u.mobile)}</TableCell>
                       <TableCell className="whitespace-nowrap">
                         {u.type === "SELLER" ? (
                           <StatusBadge tone="info">{u.sellerName ?? "Seller"}</StatusBadge>

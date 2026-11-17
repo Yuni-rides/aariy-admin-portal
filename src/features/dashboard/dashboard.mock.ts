@@ -1,44 +1,41 @@
-// TEMPORARY: mock data until the dashboard API is ready.
+// TEMPORARY: until the dashboard API is ready, the dashboard is built from the
+// same mock data the list pages use, so the counts always match them.
 // Delete this file once dashboard.api.ts is wired into the store.
+import { Order } from "@/features/orders/orders.types";
+import { Seller } from "@/features/sellers/sellers.types";
+import { Product } from "@/features/products/products.types";
+import { matchesTab } from "@/features/orders/orders.helpers";
+import { needsReview } from "@/features/sellers/sellers.helpers";
 import { DashboardData } from "./dashboard.types";
 
-export const DASHBOARD_MOCK: DashboardData = {
-  stats: {
-    ordersPendingConfirmation: 12,
-    sellersAwaitingApproval: 5,
-    productsToModerate: 28,
-    refundsWaiting: 3,
-  },
-  recentOrders: [
-    {
-      id: "o-1042",
-      orderNumber: "ARY-1042",
-      sellerCount: 3,
-      totalCod: 15000,
-      status: "PENDING_CONFIRMATION",
-      createdAt: "2026-11-10T10:12:00Z",
+export function buildDashboard(orders: Order[], sellers: Seller[], products: Product[]): DashboardData {
+  const ordersPending = orders.filter((o) => matchesTab(o, "PENDING_CONFIRMATION")).length;
+  const sellersPending = sellers.filter((s) => needsReview(s.status)).length;
+  const productsPending = products.filter((p) => p.status === "SUBMITTED").length;
+
+  return {
+    stats: {
+      ordersPendingConfirmation: ordersPending,
+      sellersAwaitingApproval: sellersPending,
+      productsToModerate: productsPending,
+      refundsWaiting: null,
     },
-    {
-      id: "o-1041",
-      orderNumber: "ARY-1041",
-      sellerCount: 1,
-      totalCod: 4200,
-      status: "CONFIRMED",
-      createdAt: "2026-11-10T08:40:00Z",
-    },
-    {
-      id: "o-1040",
-      orderNumber: "ARY-1040",
-      sellerCount: 2,
-      totalCod: 9800,
-      status: "PARTIALLY_CANCELLED",
-      createdAt: "2026-11-09T17:05:00Z",
-    },
-  ],
-  attention: [
-    { key: "kyb", label: "Seller KYB reviews", value: 5, tone: "warning", href: "/sellers" },
-    { key: "products", label: "Product approvals", value: 28, tone: "warning", href: "/products" },
-    { key: "csr", label: "Orders awaiting CSR call", value: 12, tone: "warning", href: "/orders" },
-    { key: "payout", label: "Payout batch for approval", value: "Month end", tone: "info" },
-  ],
-};
+    recentOrders: [...orders]
+      .sort((a, b) => Date.parse(b.placedAt) - Date.parse(a.placedAt))
+      .slice(0, 5)
+      .map((o) => ({
+        id: o.id,
+        orderNumber: o.orderNumber,
+        sellerCount: o.suborders.length,
+        totalCod: o.total,
+        status: o.status,
+        createdAt: o.placedAt,
+      })),
+    attention: [
+      { key: "kyb", label: "Seller KYB reviews", value: sellersPending, tone: "warning", href: "/sellers" },
+      { key: "products", label: "Product approvals", value: productsPending, tone: "warning", href: "/products" },
+      { key: "csr", label: "Orders awaiting CSR call", value: ordersPending, tone: "warning", href: "/orders" },
+      { key: "payout", label: "Payout batch for approval", value: "Month end", tone: "info" },
+    ],
+  };
+}

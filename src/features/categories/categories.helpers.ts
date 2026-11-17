@@ -19,6 +19,31 @@ export function getSiblings(list: Category[], parentId: string | null) {
   return list.filter((c) => c.parentId === parentId).sort(bySortOrder);
 }
 
+/**
+ * Puts category `id` at `position` (1 = first) under `parentId` and renumbers
+ * that level 1, 2, 3… so there are no gaps or duplicates. `list` must already
+ * contain the category with its new parent.
+ */
+export function placeInSiblings(list: Category[], id: string, parentId: string | null, position: number): Category[] {
+  const others = getSiblings(list, parentId).filter((c) => c.id !== id);
+  const pos = Math.min(Math.max(1, Math.round(position) || 1), others.length + 1);
+  const ordered = others.map((c) => c.id);
+  ordered.splice(pos - 1, 0, id);
+  return list.map((c) => {
+    const i = ordered.indexOf(c.id);
+    return i === -1 ? c : { ...c, sortOrder: i + 1 };
+  });
+}
+
+/** Renumbers one level 1, 2, 3… (after a category leaves it). */
+export const renumberSiblings = (list: Category[], parentId: string | null): Category[] => {
+  const ordered = getSiblings(list, parentId).map((c) => c.id);
+  return list.map((c) => {
+    const i = ordered.indexOf(c.id);
+    return i === -1 ? c : { ...c, sortOrder: i + 1 };
+  });
+};
+
 /** Root → category chain. */
 export function getCategoryPath(list: Category[], id: string): Category[] {
   const path: Category[] = [];

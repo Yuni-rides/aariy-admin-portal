@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Pencil, Plus, ShieldAlert, Trash2 } from "lucide-react";
+import { Banknote, Pencil, Plus, ShieldAlert, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { Checkbox } from "@/components/ui/Checkbox";
@@ -237,8 +237,13 @@ export default function RolesPage() {
                           />
                           <span className="font-medium">{mod.label}</span>
                           {mod.sensitive && (
-                            <span title="Gives control over who can do what">
+                            <span title="Sensitive: controls who can do what, or shows personal data">
                               <ShieldAlert className="h-3.5 w-3.5 text-[#8A5A00]" />
+                            </span>
+                          )}
+                          {mod.money && (
+                            <span title="Moves money. Keep this to the Finance role.">
+                              <Banknote className="h-3.5 w-3.5 text-[#1F7A4D]" />
                             </span>
                           )}
                         </label>

@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
-import { MoreHorizontal } from "lucide-react";
+import { MoreHorizontal, ShieldAlert } from "lucide-react";
+import { AUTH_BYPASS } from "@/features/auth/auth.mock";
 import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { ConfirmDialog } from "@/components/ui/ConfirmDialog";
@@ -114,6 +115,8 @@ export default function StaffPage() {
     if (res.success && res.link) setIssued(res.link);
   };
 
+  const withoutMfa = staff.filter((m) => m.status === "ACTIVE" && !m.mfaEnabled);
+
   const sorted = useMemo(() => {
     // Super admin first, then roles in the order Roles & Permissions lists them.
     const rank = (id: StaffRole) => (id === SUPER_ADMIN_ROLE_ID ? -1 : roles.findIndex((r) => r.id === id));
@@ -192,6 +195,19 @@ export default function StaffPage() {
       </Card>
 
       {/* Staff list */}
+      {withoutMfa.length > 0 && (
+        <div role="alert" className="flex items-start gap-2.5 rounded-2xl border border-[#F2C9C0] bg-[#FDF1EE] p-4 text-sm">
+          <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0 text-destructive" />
+          <p>
+            <span className="font-medium">
+              {withoutMfa.length} active {withoutMfa.length === 1 ? "account has" : "accounts have"} no 2-step sign-in:
+            </span>{" "}
+            {withoutMfa.map((m) => m.name).join(", ")}. Every staff account must turn it on before launch; they are asked
+            to set it up the next time they sign in.
+          </p>
+        </div>
+      )}
+
       <Card className="rounded-2xl p-[18px] shadow-none">
         <Table>
           <TableHeader>
@@ -200,6 +216,7 @@ export default function StaffPage() {
               <TableHead>Role</TableHead>
               <TableHead>Permissions</TableHead>
               <TableHead>Status</TableHead>
+              <TableHead>2-step sign-in</TableHead>
               <TableHead>Last login</TableHead>
               <TableHead className="w-0" />
             </TableRow>
@@ -207,7 +224,7 @@ export default function StaffPage() {
           <TableBody>
             {loading && staff.length === 0 ? (
               <TableRow>
-                <TableCell colSpan={6} className="py-6 text-center">Loading...</TableCell>
+                <TableCell colSpan={7} className="py-6 text-center">Loading...</TableCell>
               </TableRow>
             ) : (
               sorted.map((m) => {
@@ -220,6 +237,9 @@ export default function StaffPage() {
                         {m.name}
                         {me && <span className="font-normal text-muted-foreground"> (you)</span>}
                       </p>
+                      {AUTH_BYPASS && m.id === "staff-owner" && (
+                        <StatusBadge tone="warning">Test login account</StatusBadge>
+                      )}
                       <p className="text-xs text-muted-foreground">{m.email}</p>
                     </TableCell>
                     <TableCell className="whitespace-nowrap">{roleName(roles, m.role)}</TableCell>
@@ -229,6 +249,15 @@ export default function StaffPage() {
                         <StatusBadge tone={staffStatusToneMap[m.status]}>{staffStatusLabelMap[m.status]}</StatusBadge>
                         {expired && <span className="text-xs text-destructive">Setup link expired</span>}
                       </div>
+                    </TableCell>
+                    <TableCell>
+                      {m.status === "DEACTIVATED" ? (
+                        <span className="text-muted-foreground">—</span>
+                      ) : m.mfaEnabled ? (
+                        <StatusBadge tone="success">On</StatusBadge>
+                      ) : (
+                        <StatusBadge tone="danger">{m.status === "PENDING" ? "Set up on first sign-in" : "Off"}</StatusBadge>
+                      )}
                     </TableCell>
                     <TableCell className="whitespace-nowrap">{formatLastLogin(m.lastLoginAt)}</TableCell>
                     <TableCell>

@@ -24,8 +24,10 @@ export const MODULES: {
   actions: PermissionAction[];
   /** What each action allows, shown as a tooltip. */
   hints?: Partial<Record<PermissionAction, string>>;
-  /** Access here lets someone change who can do what. */
+  /** Access here lets someone change who can do what, or see personal data. */
   sensitive?: boolean;
+  /** Moves money; keep it to Finance. */
+  money?: boolean;
 }[] = [
   { key: "DASHBOARD", label: "Dashboard", actions: ["VIEW", "EXPORT"] },
   {
@@ -59,6 +61,41 @@ export const MODULES: {
     hints: { APPROVE: "Log confirmation calls and confirm orders", MANAGE: "Cancel orders and parcels" },
   },
   {
+    key: "REFUNDS",
+    label: "Refunds & returns",
+    actions: ["VIEW", "EDIT", "APPROVE", "EXPORT"],
+    hints: { EDIT: "Log return pickups and inspection results", APPROVE: "Approve refunds to buyers (money out)" },
+    money: true,
+  },
+  {
+    key: "SUPPORT",
+    label: "Support tickets",
+    actions: ["VIEW", "CREATE", "EDIT", "MANAGE"],
+    hints: { MANAGE: "Assign, escalate and close tickets" },
+  },
+  {
+    key: "PAYOUTS",
+    label: "Payouts & statements",
+    actions: ["VIEW", "CREATE", "APPROVE", "EXPORT"],
+    hints: {
+      CREATE: "Prepare payout batches and record bank transfers",
+      APPROVE: "Approve payout batches and seller statements (money out)",
+    },
+    money: true,
+  },
+  {
+    key: "RECONCILIATION",
+    label: "Reconciliation",
+    actions: ["VIEW", "EDIT", "APPROVE", "EXPORT"],
+    hints: { EDIT: "Match courier COD remittances to orders", APPROVE: "Close a reconciliation period" },
+    money: true,
+  },
+  {
+    key: "REPORTS",
+    label: "Reports & KPIs",
+    actions: ["VIEW", "EXPORT"],
+  },
+  {
     key: "TIERS",
     label: "Tier Management",
     actions: ["VIEW", "CREATE", "EDIT", "APPROVE"],
@@ -72,6 +109,17 @@ export const MODULES: {
     sensitive: true,
   },
   { key: "ROLES", label: "Roles & Permissions", actions: ["VIEW", "MANAGE"], sensitive: true },
+  { key: "AUDIT_LOG", label: "Audit log", actions: ["VIEW", "EXPORT"] },
+  {
+    key: "PERSONAL_DATA",
+    label: "Personal data",
+    actions: ["VIEW", "EXPORT"],
+    hints: {
+      VIEW: "Reveal full CNIC, NTN, phone numbers, emails and bank accounts (each reveal is logged)",
+      EXPORT: "Export lists with unmasked contact details",
+    },
+    sensitive: true,
+  },
   {
     key: "SETTINGS",
     label: "Settings",

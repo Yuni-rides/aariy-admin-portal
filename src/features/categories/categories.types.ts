@@ -25,6 +25,8 @@ export type CreateCategoryDto = {
   showInMenu: boolean;
   isActive: boolean;
   isCurated: boolean;
+  /** Position among its siblings, 1 = first. The others move down to make room. */
+  sortOrder: number;
 };
 
 export type UpdateCategoryDto = Partial<CreateCategoryDto>;

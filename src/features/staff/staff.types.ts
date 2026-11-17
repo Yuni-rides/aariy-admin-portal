@@ -18,6 +18,8 @@ export type StaffMember = {
   lastLoginAt?: string | null;
   invitedBy?: string | null;
   invitedAt: string;
+  /** Two-step sign-in (authenticator app) is set up. Required before launch for every active account. */
+  mfaEnabled: boolean;
   /** When the latest setup / reset link stops working. */
   linkExpiresAt?: string | null;
 };

@@ -13,7 +13,7 @@ const docs = (
     status: overrides[type] ?? "UPLOADED",
   }));
 
-export const SELLERS_MOCK: Seller[] = [
+const BASE_SELLERS: Seller[] = [
   {
     id: "maria-b",
     name: "Maria B",
@@ -133,3 +133,29 @@ export const SELLERS_MOCK: Seller[] = [
     createdAt: "2026-08-18T09:00:00Z",
   },
 ];
+
+// Payout details for the mock sellers (sent by the seller during onboarding).
+const PAYOUT_DETAILS: Record<string, Pick<Seller, "bankAccount" | "businessAddress">> = {
+  "maria-b": {
+    bankAccount: { bankName: "Meezan Bank", accountTitle: "[Legal name]", iban: "PK36MEZN0002010100123456" },
+    businessAddress: "Plot 21, Sector 15, Korangi Industrial Area, Karachi",
+  },
+  "monanza": {
+    bankAccount: { bankName: "HBL", accountTitle: "Monanza Apparel (Pvt) Ltd", iban: "PK12HABB0012345678901234" },
+    businessAddress: "45-B, Gulberg III, Lahore",
+  },
+  "noor-jahan": {
+    bankAccount: { bankName: "UBL", accountTitle: "Noor Jahan Textiles", iban: "PK70UNIL0109000212345678" },
+    businessAddress: "12 Mall Road, Rawalpindi",
+  },
+  "j-dot": {
+    bankAccount: { bankName: "Bank Alfalah", accountTitle: "J. Retail (Pvt) Ltd", iban: "PK05ALFH0055001004567890" },
+    businessAddress: "Shahrah-e-Faisal, Karachi",
+  },
+  "zarveen-couture": {
+    bankAccount: { bankName: "Standard Chartered", accountTitle: "Zarveen Couture", iban: "PK36SCBL0000001123456702" },
+    businessAddress: "DHA Phase 6, Lahore",
+  },
+};
+
+export const SELLERS_MOCK: Seller[] = BASE_SELLERS.map((s) => ({ ...s, ...PAYOUT_DETAILS[s.id] }));

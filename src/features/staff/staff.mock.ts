@@ -2,6 +2,8 @@
 // Delete this file once staff.api.ts is wired into the store.
 import { StaffMember } from "./staff.types";
 
+// "Test Admin" is the account the test login (NEXT_PUBLIC_AUTH_BYPASS) signs in as.
+// It only exists in this mock; the real staff list comes from the API.
 export const STAFF_MOCK: StaffMember[] = [
   {
     id: "staff-owner",
@@ -9,6 +11,7 @@ export const STAFF_MOCK: StaffMember[] = [
     email: "owner@aariy.example",
     role: "SUPER_ADMIN",
     status: "ACTIVE",
+    mfaEnabled: false,
     lastLoginAt: null,
     invitedAt: "2026-06-01T09:00:00Z",
   },
@@ -18,6 +21,7 @@ export const STAFF_MOCK: StaffMember[] = [
     email: "csr@aariy.example",
     role: "CSR",
     status: "ACTIVE",
+    mfaEnabled: true,
     lastLoginAt: "2026-11-06T01:12:00Z",
     invitedBy: "Test Admin",
     invitedAt: "2026-09-12T09:00:00Z",
@@ -28,6 +32,7 @@ export const STAFF_MOCK: StaffMember[] = [
     email: "fin@aariy.example",
     role: "FINANCE",
     status: "PENDING",
+    mfaEnabled: false,
     lastLoginAt: null,
     invitedBy: "Test Admin",
     invitedAt: "2026-11-03T10:00:00Z",
@@ -40,6 +45,7 @@ export const STAFF_MOCK: StaffMember[] = [
     email: "ops@aariy.example",
     role: "OPERATIONS",
     status: "ACTIVE",
+    mfaEnabled: false,
     lastLoginAt: "2026-11-11T05:40:00Z",
     invitedBy: "Test Admin",
     invitedAt: "2026-08-20T09:00:00Z",
@@ -50,6 +56,7 @@ export const STAFF_MOCK: StaffMember[] = [
     email: "support@aariy.example",
     role: "SUPPORT",
     status: "DEACTIVATED",
+    mfaEnabled: true,
     lastLoginAt: "2026-10-02T08:00:00Z",
     invitedBy: "Test Admin",
     invitedAt: "2026-07-15T09:00:00Z",

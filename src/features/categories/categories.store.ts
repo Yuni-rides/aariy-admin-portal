@@ -5,7 +5,7 @@ import {
   UpdateCategoryDto,
 } from "./categories.types";
 import { CATEGORIES_MOCK } from "./categories.mock";
-import { getSiblings, hasChildren } from "./categories.helpers";
+import { hasChildren, placeInSiblings, renumberSiblings } from "./categories.helpers";
 
 type Result = { success: boolean; message: string };
 
@@ -64,12 +64,16 @@ export const useCategoriesStore = create<CategoriesStore>((set, get) => ({
       };
     }
 
+    if (!Number.isInteger(dto.sortOrder) || dto.sortOrder < 1) {
+      return { success: false, message: "Sort order must be a whole number from 1" };
+    }
+
     set({ saving: true });
-    // TODO(api): const res = await categoriesApi.createCategory(dto);
+    // TODO(api): const res = await categoriesApi.createCategory(dto); — dto includes sortOrder.
     const id = `cat-${Date.now()}`;
-    const sortOrder = getSiblings(categories, dto.parentId).length + 1;
+    const withNew = [...categories, { ...dto, id, productCount: 0 }];
     set({
-      categories: [...categories, { ...dto, id, sortOrder, productCount: 0 }],
+      categories: placeInSiblings(withNew, id, dto.parentId, dto.sortOrder),
       saving: false,
     });
     return { success: true, message: "Category created", id };
@@ -87,23 +91,18 @@ export const useCategoriesStore = create<CategoriesStore>((set, get) => ({
       return { success: false, message: "Slug already used under this parent" };
     }
 
+    if (dto.sortOrder !== undefined && (!Number.isInteger(dto.sortOrder) || dto.sortOrder < 1)) {
+      return { success: false, message: "Sort order must be a whole number from 1" };
+    }
+
     set({ saving: true });
-    // TODO(api): const res = await categoriesApi.updateCategory(id, dto);
+    // TODO(api): const res = await categoriesApi.updateCategory(id, dto); — dto includes sortOrder.
     const moved = parentId !== current.parentId;
-    set({
-      categories: categories.map((c) =>
-        c.id === id
-          ? {
-              ...c,
-              ...dto,
-              sortOrder: moved
-                ? getSiblings(categories, parentId).length + 1
-                : c.sortOrder,
-            }
-          : c,
-      ),
-      saving: false,
-    });
+    let next = categories.map((c) => (c.id === id ? { ...c, ...dto, parentId } : c));
+    // Close the gap it left at the old level, then place it at the new position.
+    if (moved) next = renumberSiblings(next, current.parentId);
+    next = placeInSiblings(next, id, parentId, dto.sortOrder ?? (moved ? Number.MAX_SAFE_INTEGER : current.sortOrder));
+    set({ categories: next, saving: false });
     return { success: true, message: "Changes saved" };
   },
 

@@ -1,15 +1,19 @@
-export type OrderStatus =
-  | "PENDING_CONFIRMATION"
-  | "CONFIRMED"
-  | "PARTIALLY_CANCELLED"
-  | "CANCELLED"
-  | "DELIVERED";
+import type { OrderStatus } from "@/features/orders/orders.types";
 
+export type { OrderStatus };
+
+/**
+ * Each count uses exactly the filter of the matching list page, so the numbers agree:
+ * - ordersPendingConfirmation: Orders → "Pending confirmation" tab
+ * - sellersAwaitingApproval: Sellers with status KYB pending
+ * - productsToModerate: Products → "Submitted" tab
+ * - refundsWaiting: null until the Refunds module exists
+ */
 export type DashboardStats = {
   ordersPendingConfirmation: number;
   sellersAwaitingApproval: number;
   productsToModerate: number;
-  refundsWaiting: number;
+  refundsWaiting: number | null;
 };
 
 export type RecentOrder = {

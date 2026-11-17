@@ -16,9 +16,16 @@ export type ModuleKey =
   | "PRODUCTS"
   | "USERS"
   | "ORDERS"
+  | "REFUNDS"
+  | "SUPPORT"
+  | "PAYOUTS"
+  | "RECONCILIATION"
+  | "REPORTS"
   | "TIERS"
   | "STAFF"
   | "ROLES"
+  | "AUDIT_LOG"
+  | "PERSONAL_DATA"
   | "SETTINGS";
 
 export type PermissionMatrix = Partial<Record<ModuleKey, PermissionAction[]>>;

@@ -1,4 +1,6 @@
 "use client";
+import { SensitiveValue } from "@/components/SensitiveValue";
+import { maskPhone } from "@/lib/mask";
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -99,11 +101,11 @@ export function UserDetailPanel({
       <div className="flex flex-col gap-2 text-sm">
         <div className="flex items-center gap-2.5">
           <Mail className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span className="truncate">{user.email}</span>
+          <SensitiveValue value={user.email} kind="email" label="email" target={`User ${user.name}`} />
         </div>
         <div className="flex items-center gap-2.5">
           <Phone className="h-4 w-4 shrink-0 text-muted-foreground" />
-          <span>{user.mobile}</span>
+          <SensitiveValue value={user.mobile} kind="phone" label="mobile number" target={`User ${user.name}`} />
         </div>
       </div>
 
@@ -157,7 +159,7 @@ export function UserDetailPanel({
                     {formatAddress(a)}
                     {a.isDefault && <span className="text-muted-foreground"> · default</span>}
                   </p>
-                  <p className="text-muted-foreground">{a.phone}</p>
+                  <p className="text-muted-foreground tabular-nums">{maskPhone(a.phone)}</p>
                 </div>
               </div>
             ))

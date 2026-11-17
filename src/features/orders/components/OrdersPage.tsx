@@ -1,4 +1,5 @@
 "use client";
+import { maskPhone } from "@/lib/mask";
 
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "next/navigation";
@@ -96,7 +97,7 @@ export default function OrdersPage() {
         o.orderNumber,
         formatOrderTime(o.placedAt),
         o.buyerName,
-        o.contactPhone,
+        maskPhone(o.contactPhone),
         o.address.city,
         o.paymentMethod,
         o.suborders.length,

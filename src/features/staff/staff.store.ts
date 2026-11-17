@@ -94,6 +94,8 @@ export const useStaffStore = create<StaffStore>((set, get) => {
         email,
         role: dto.role,
         status: "PENDING",
+        // Set up by the person on first sign-in.
+        mfaEnabled: false,
         lastLoginAt: null,
         invitedBy: actorName(),
         invitedAt: new Date().toISOString(),

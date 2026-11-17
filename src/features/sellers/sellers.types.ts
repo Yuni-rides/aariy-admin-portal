@@ -60,6 +60,17 @@ export type Seller = {
   reviewCount?: number | null;
   /** Sale the seller is running from the seller portal; such brands can fill the home banner. */
   activeSale?: SellerSale | null;
+  /** Where payouts are sent. Checked against the bank proof document during KYB. */
+  bankAccount?: SellerBankAccount | null;
+  /** Pickup / business address. */
+  businessAddress?: string | null;
+};
+
+export type SellerBankAccount = {
+  bankName: string;
+  /** Must match the legal name on KYB documents. */
+  accountTitle: string;
+  iban: string;
 };
 
 export type SellerSale = {
