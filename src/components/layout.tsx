@@ -135,9 +135,9 @@ export function Header() {
     await logout(token || "");
   };
 
-  const initials =
-    `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase() ||
-    "SA";
+  const initials =user?.fullName[0] ??''
+    // `${user?.firstName?.[0] ?? ""}${user?.lastName?.[0] ?? ""}`.toUpperCase() ||
+    // "SA";
 
   return (
     <header className="sticky top-0 z-10 flex h-16 items-center justify-between border-b bg-white px-6">
@@ -183,7 +183,8 @@ export function Header() {
         <DropdownMenuContent align="end" className="w-56">
           <div className="flex flex-col space-y-1 p-2">
             <p className="text-sm font-medium leading-none">
-              {user?.firstName} {user?.lastName}
+              {/* {user?.firstName} {user?.lastName} */}
+              {user?.fullName}
             </p>
             <p className="text-xs leading-none text-muted-foreground">
               {user?.email}

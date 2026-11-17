@@ -9,7 +9,7 @@ export const getRoleLabel = (role?: string) =>
   (role ? role.replace(/_/g, " ").toLowerCase() : "—");
 
 export const getInitials = (firstName?: string, lastName?: string) =>
-  `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.toUpperCase() || "SA";
+  `${firstName?.[0] ?? ""}${lastName?.[0] ?? ""}`.toUpperCase() || "";
 
 export const MIN_PASSWORD_LENGTH = 8;
 

@@ -14,6 +14,8 @@ export const buildMockUser = (email: string): AuthUser => ({
   firstName: "Test",
   lastName: "Admin",
   role: "SUPER_ADMIN",
-  permissions: {} as PermissionMap,
-  company: null,
+  permissions: [],
+  fullName: "",
+  mfaEnabled: false,
+  lastSignInAt: ""
 });

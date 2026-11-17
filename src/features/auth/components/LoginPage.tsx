@@ -114,12 +114,12 @@ export default function Login() {
                 required
               />
             </div>
-
+{/* 
             {AUTH_BYPASS && (
               <p className="rounded-md bg-accent px-3 py-2 text-center text-xs text-muted-foreground">
                 Test mode: any email and password will log you in.
               </p>
-            )}
+            )} */}
 
             <Button
               type="submit"

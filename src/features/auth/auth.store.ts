@@ -13,6 +13,8 @@ type AuthStore = {
   error: string | null;
 
   login: (dto: LoginDto) => Promise<{ success: boolean; message: string }>;
+    getProfile: () => Promise<{ success: boolean; message: string }>;
+
   logout: (fcmToken: string) => Promise<void>;
   setPassword: (
     dto: SetPasswordDto,
@@ -31,18 +33,22 @@ export const useAuthStore = create<AuthStore>()(
         set({ loading: true, error: null });
 
         // TEMPORARY: accept any email/password until the auth API is ready.
-        if (AUTH_BYPASS) {
-          Cookies.set("token", MOCK_ACCESS_TOKEN, { expires: 1, sameSite: "lax" });
-          set({
-            user: buildMockUser(dto.email),
-            accessToken: MOCK_ACCESS_TOKEN,
-            loading: false,
-          });
-          return { success: true, message: "Logged in (test mode)" };
-        }
+        // if (AUTH_BYPASS) {
+        //   Cookies.set("token", MOCK_ACCESS_TOKEN, { expires: 1, sameSite: "lax" });
+        //   set({
+        //     user: buildMockUser(dto.email),
+        //     accessToken: MOCK_ACCESS_TOKEN,
+        //     loading: false,
+        //   });
+        //   return { success: true, message: "Logged in (test mode)" };
+        // }
 
         try {
           const res = await authApi.login(dto);
+
+
+
+
 
           if (!res.status || !res.data) {
             const message = res.message ?? "Invalid email or password";
@@ -50,19 +56,23 @@ export const useAuthStore = create<AuthStore>()(
             return { success: false, message };
           }
 
-          const apiUser = res.data.user;
+          console.log("[Login][data]",res)
+
+
+          const apiUser = res.data.staff;
           const role = apiUser.role;
 
-          const permissions = buildPermissionMap(role.permissions);
+          const permissions = buildPermissionMap(apiUser.permissions??[]);
 
           const user: AuthUser = {
             id: apiUser.id,
             email: apiUser.email,
-            firstName: apiUser.firstName,
-            lastName: apiUser.lastName,
-            role: role.code,
-            permissions,
-            company: apiUser.company ?? null,
+            fullName: apiUser.fullName,
+            // lastName: apiUser.lastName,
+            role: role,
+            permissions: apiUser.permissions,
+            mfaEnabled: apiUser.mfaEnabled,
+            lastSignInAt: apiUser.lastSignInAt
           };
 
           const token = res.data.accessToken;
@@ -86,17 +96,52 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
+      getProfile: async () => {
+  try {
+    const res = await authApi.getProfile();
+
+    if (res.status === true && res.data) {
+      const apiUser = res.data;
+
+      const user: AuthUser = {
+        id: apiUser.id,
+        email: apiUser.email,
+        fullName: apiUser.fullName,
+        // lastName: apiUser.lastName, // <-- Agar response model mein nahi hai toh hata dein
+        role: apiUser.role,
+        permissions: apiUser.permissions ?? [],
+        mfaEnabled: apiUser.mfaEnabled,
+        lastSignInAt: apiUser.lastSignInAt,
+      };
+
+      set({ user });
+      return { success: true, message: res.message };
+    }
+
+    // Agar res.status false ho toh yeh return hoga (TypeScript error khatam)
+    return { success: false, message: res.message ?? "Failed to fetch profile" };
+  } catch (e: any) {
+    const message = e?.response?.data?.message ?? "Failed to fetch profile";
+    console.error("Failed to fetch profile:", e);
+    return { success: false, message };
+  }
+},
+
       logout: async (fcmToken: string) => {
         try {
-          if (!AUTH_BYPASS) await authApi.logout({ fcmToken });
-        } catch (error) {
-          console.error("Logout API failed", error);
-        } finally {
-          Cookies.remove("token");
+          console.log("[auth.store] logout run")
+          // if (!AUTH_BYPASS) 
+            await authApi.logout({ fcmToken });
+
+                 Cookies.remove("token");
           localStorage.removeItem("auth-storage");
           set({ user: null, accessToken: null });
 
           window.location.href = "/login";
+        } catch (error) {
+          console.error("Logout API failed", error);
+        } finally {
+   
         }
       },
 
