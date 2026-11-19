@@ -141,7 +141,8 @@ export const useAuthStore = create<AuthStore>()(
         } catch (error) {
           console.error("Logout API failed", error);
         } finally {
-   
+                    Cookies.remove("token");
+          localStorage.removeItem("auth-storage");
         }
       },
 

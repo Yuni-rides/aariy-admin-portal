@@ -17,6 +17,9 @@ export const httpUpload = axios.create({
 const addTokenInterceptor = (config: any) => {
   if (typeof window !== "undefined") {
     const token = useAuthStore.getState().accessToken;
+    
+
+    console.log(token)
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }

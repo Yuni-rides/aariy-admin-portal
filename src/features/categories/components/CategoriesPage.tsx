@@ -51,6 +51,7 @@ export default function CategoriesPage() {
   }, [categories, selectedId, creating]);
 
   const tree = useMemo(() => buildCategoryTree(categories), [categories]);
+  console.log("[]tree. ",tree)
   const selected = categories.find((c) => c.id === selectedId);
   const siblings = useMemo(
     () => (selected ? getSiblings(categories, selected.parentId) : []),
@@ -67,6 +68,9 @@ export default function CategoriesPage() {
     );
 
   const handleSubmit = async (dto: CreateCategoryDto) => {
+
+
+
     if (creating) {
       const res = await createCategory(dto);
       notify(res);
@@ -86,7 +90,7 @@ export default function CategoriesPage() {
     setDeleteOpen(false);
     if (res.success) setSelectedId(selected.parentId);
   };
-
+const toggleCategoryStatus = useCategoriesStore((s) => s.toggleCategoryStatus);
   return (
     <div className="flex flex-col gap-5">
       <div className="flex flex-wrap items-center justify-between gap-3">
@@ -148,6 +152,20 @@ export default function CategoriesPage() {
                   ? () => startCreate(selected.id)
                   : undefined
               }
+              onToggleStatus={async (id, isActive) => {
+    const res = await toggleCategoryStatus(id, isActive);
+    if (res.success) {
+toast({
+      title: "Success",
+      description: res.message,
+    });    } else {
+toast({
+      variant: "destructive",
+      title: "Error",
+      description: res.message,
+    });
+      }
+  }}
               onDelete={() => setDeleteOpen(true)}
               onReorder={() => setReorderOpen(true)}
             />

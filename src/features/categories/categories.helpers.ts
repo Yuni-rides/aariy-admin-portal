@@ -7,9 +7,10 @@ const bySortOrder = (a: Category, b: Category) =>
   a.sortOrder - b.sortOrder || a.name.localeCompare(b.name);
 
 export function buildCategoryTree(list: Category[]): CategoryNode[] {
+  console.log('[buildCategoryTree]',list)
   const walk = (parentId: string | null, depth: number): CategoryNode[] =>
     list
-      .filter((c) => c.parentId === parentId)
+      .filter((c) => (c.parentId || null) === parentId)
       .sort(bySortOrder)
       .map((c) => ({ ...c, depth, children: walk(c.id, depth + 1) }));
   return walk(null, 1);

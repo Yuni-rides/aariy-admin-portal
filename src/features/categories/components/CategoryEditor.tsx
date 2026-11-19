@@ -33,6 +33,7 @@ type CategoryEditorProps = {
   defaultParentId?: string | null;
   saving: boolean;
   onSubmit: (dto: CreateCategoryDto) => void;
+  onToggleStatus?: (id: string, isActive: boolean) => Promise<void> | void; // <-- Naya prop
   onCancel?: () => void;
   onDelete?: () => void;
   onReorder?: () => void;
@@ -44,7 +45,7 @@ const emptyForm = (parentId: string | null): CreateCategoryDto => ({
   name: "",
   slug: "",
   parentId,
-  imageUrl: null,
+  imageKey: null,
   showInMenu: true,
   isActive: true,
   isCurated: false,
@@ -57,10 +58,13 @@ export function CategoryEditor({
   defaultParentId = null,
   saving,
   onSubmit,
+  onToggleStatus, // <-- Yahan receive karein
   onCancel,
   onDelete,
   onReorder,
   onAddChild,
+
+
 }: CategoryEditorProps) {
   const isEdit = !!category;
   const [form, setForm] = useState<CreateCategoryDto>(emptyForm(defaultParentId));
@@ -82,7 +86,7 @@ export function CategoryEditor({
         name: category.name,
         slug: category.slug,
         parentId: category.parentId,
-        imageUrl: category.imageUrl ?? null,
+        imageKey: category.imageKey ?? null,
         showInMenu: category.showInMenu,
         isActive: category.isActive,
         isCurated: category.isCurated,
@@ -107,8 +111,10 @@ export function CategoryEditor({
   const canDelete = isEdit && isLeaf && category!.productCount === 0;
 
   // Positions available under the chosen parent (one more if this category joins that level).
-  const siblingCount = getSiblings(categories, form.parentId).filter((c) => c.id !== category?.id).length;
-  const maxPosition = siblingCount + 1;
+const siblingCount = getSiblings(categories, form.parentId ?? null).filter(
+  (c) => c.id !== category?.id
+).length;
+const maxPosition = siblingCount + 1;
 
   // Until the field is typed in: an existing category under its own parent keeps its
   // position; a new category, or one moved to another parent, goes last.
@@ -132,7 +138,7 @@ export function CategoryEditor({
   const handleImage = (file?: File) => {
     if (!file) return;
     // TODO(api): upload the file and store the returned URL instead.
-    update("imageUrl", URL.createObjectURL(file));
+    update("imageKey", URL.createObjectURL(file));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -141,13 +147,25 @@ export function CategoryEditor({
     if (!form.name.trim()) next.name = "Name is required";
     if (!Number.isInteger(form.sortOrder) || form.sortOrder < 1 || form.sortOrder > maxPosition)
       next.sortOrder = `Use a number from 1 to ${maxPosition}`;
-    if (!form.slug.trim()) next.slug = "Slug is required";
+    if (!form.slug?.trim()) next.slug = "Slug is required";
     else if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(form.slug))
       next.slug = "Use lowercase letters, numbers and dashes only";
     setErrors(next);
     if (Object.keys(next).length) return;
-    onSubmit({ ...form, name: form.name.trim() });
-  };
+if (isEdit) {
+    // Edit Mode: Sirf name aur sortOrder bhejein
+    onSubmit({
+      name: form.name.trim(),
+      sortOrder: form.sortOrder,
+    });
+  } else {
+    // Create Mode: Poora payload bhejein
+    onSubmit({
+      ...form,
+      name: form.name.trim(),
+      slug: form.slug?.trim() || null,
+    });
+  }  };
 
   return (
     <Card className="rounded-2xl p-[18px] shadow-none">
@@ -203,7 +221,7 @@ export function CategoryEditor({
             <Input
               id="cat-slug"
               className="h-11 rounded-[10px] bg-white"
-              value={form.slug}
+              value={form.slug ??""}
               onChange={(e) => {
                 setSlugTouched(true);
                 update("slug", e.target.value);
@@ -272,10 +290,10 @@ export function CategoryEditor({
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {form.imageUrl ? (
+          {form.imageKey ? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={form.imageUrl}
+              src={form.imageKey}
               alt=""
               className="h-[72px] w-[72px] rounded-full border object-cover"
             />
@@ -299,14 +317,14 @@ export function CategoryEditor({
                 className="min-h-11 cursor-pointer rounded-[10px]"
                 onClick={() => fileRef.current?.click()}
               >
-                {form.imageUrl ? "Change image" : "Upload circle image"}
+                {form.imageKey ? "Change image" : "Upload circle image"}
               </Button>
-              {form.imageUrl && (
+              {form.imageKey && (
                 <Button
                   type="button"
                   variant="ghost"
                   className="min-h-11 cursor-pointer rounded-[10px]"
-                  onClick={() => update("imageUrl", null)}
+                  onClick={() => update("imageKey", null)}
                 >
                   Remove
                 </Button>
@@ -318,24 +336,33 @@ export function CategoryEditor({
           </div>
         </div>
 
-        <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm">
-          {(
-            [
-              ["showInMenu", "Show in menu"],
-              ["isActive", "Active"],
-              ["isCurated", "Curated (indexed by search engines)"],
-            ] as const
-          ).map(([key, label]) => (
-            <label key={key} className="flex cursor-pointer items-center gap-2">
-              <Checkbox
-                checked={form[key]}
-                onCheckedChange={(v) => update(key, v === true)}
-                className="h-5 w-5 rounded"
-              />
-              {label}
-            </label>
-          ))}
-        </div>
+ <div className="flex flex-wrap gap-x-6 gap-y-3 text-sm">
+  {(
+    [
+      ["showInMenu", "Show in menu"],
+      ["isActive", "Active"],
+      ["isCurated", "Curated (indexed by search engines)"],
+    ] as const
+  ).map(([key, label]) => (
+    <label key={key} className="flex cursor-pointer items-center gap-2">
+      <Checkbox
+        checked={form[key] ?? false}
+        disabled={saving}
+        onCheckedChange={(v) => {
+          const checked = v === true;
+          update(key, checked);
+
+          // Sirf Edit mode mein 'Active' toggle hone par direct API hit karein
+          if (key === "isActive" && isEdit && category && onToggleStatus) {
+            onToggleStatus(category.id, checked);
+          }
+        }}
+        className="h-5 w-5 rounded"
+      />
+      {label}
+    </label>
+  ))}
+</div>
 
         <p className="text-[13px] text-muted-foreground">
           Products only go in last-level categories. A category with products
