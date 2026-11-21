@@ -49,9 +49,12 @@ const NAV_ITEMS: NavItem[] = [
   { label: "Users", icon: Users, href: "/users", ready: true },
   { label: "Orders", icon: ShoppingBag, href: "/orders", ready: true },
   { label: "Tier Management", icon: Layers, href: "/tiers", ready: true },
+    { label: "Country", icon: Package, href: "/country", ready: true },
+
   { label: "Staff", icon: UserCog, href: "/staff", ready: true },
   { label: "Roles & Permissions", icon: ShieldCheck, href: "/roles", ready: true },
   { label: "Settings", icon: Settings, href: "/settings", ready: true },
+  
 ];
 
 /* ---------------- SIDEBAR ---------------- */

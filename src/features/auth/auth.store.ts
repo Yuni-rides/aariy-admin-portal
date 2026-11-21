@@ -11,6 +11,7 @@ type AuthStore = {
   accessToken: string | null;
   loading: boolean;
   error: string | null;
+  refreshToken: string | null
 
   login: (dto: LoginDto) => Promise<{ success: boolean; message: string }>;
     getProfile: () => Promise<{ success: boolean; message: string }>;
@@ -28,6 +29,7 @@ export const useAuthStore = create<AuthStore>()(
       accessToken: null,
       loading: false,
       error: null,
+      refreshToken:null,
 
       login: async (dto) => {
         set({ loading: true, error: null });
