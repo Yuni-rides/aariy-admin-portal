@@ -41,7 +41,7 @@ export type AuthUser = {
 
   phone?: string | null;
   role: string;
-  permissions: string[];
+permissions: (PermissionCode | string)[];
   mfaEnabled: boolean;
   lastSignInAt: string;
 };
