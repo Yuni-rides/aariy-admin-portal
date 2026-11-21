@@ -10,7 +10,7 @@ export function usePermission(code?: PermissionCode) {
   const user = useAuthStore((s) => s.user);
 
   const hasPermission = (pCode: PermissionCode): boolean => {
-    return Boolean(user?.permissions?.[pCode]);
+    return Boolean(user?.permissions?.includes(pCode));
   };
 
   if (code) {
