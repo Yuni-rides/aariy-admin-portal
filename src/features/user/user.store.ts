@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { useAuthStore } from "@/features/auth/auth.store";
 import { ChangePasswordDto, UpdateProfileDto } from "./user.types";
+import { userApi } from "./user.api";
 
 type Result = { success: boolean; message: string };
 
@@ -37,8 +38,11 @@ export const useUserStore = create<UserStore>((set) => ({
   changePassword: async (dto) => {
     set({ changingPassword: true });
     try {
-      // TODO(api): const res = await userApi.changePassword(dto);
+      // TODO(api): 
+      // const res = await userApi.changePassword(dto);
       void dto;
+            const res = await userApi.changePassword(dto);
+
       set({ changingPassword: false });
       return { success: true, message: "Password changed" };
     } catch (e: any) {

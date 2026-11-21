@@ -1,13 +1,8 @@
-import { PermissionMap } from "./auth.types";
+export type PermissionMap = Record<string, boolean>;
 
-export function buildPermissionMap(
-  permissions: {
-    allowed: boolean;
-    feature: { code: string };
-  }[]
-): PermissionMap {
-  return permissions.reduce((acc, p) => {
-    acc[p.feature.code as keyof PermissionMap] = p.allowed;
+export function buildPermissionMap(permissions: string[]): PermissionMap {
+  return permissions.reduce((acc, permission) => {
+    acc[permission] = true;
     return acc;
   }, {} as PermissionMap);
 }

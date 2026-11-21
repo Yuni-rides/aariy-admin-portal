@@ -4,8 +4,9 @@ import {
   CreateCategoryDto,
   UpdateCategoryDto,
 } from "./categories.types";
-import { CATEGORIES_MOCK } from "./categories.mock";
+// import { CATEGORIES_MOCK } from "./categories.mock";
 import { hasChildren, placeInSiblings, renumberSiblings } from "./categories.helpers";
+import { categoryApi } from "./categories.api";
 
 type Result = { success: boolean; message: string };
 
@@ -20,6 +21,13 @@ type CategoriesStore = {
   updateCategory: (id: string, dto: UpdateCategoryDto) => Promise<Result>;
   deleteCategory: (id: string) => Promise<Result>;
   reorderSiblings: (orderedIds: string[]) => Promise<Result>;
+
+
+  // 1. CategoriesState interface mein add karein:
+toggleCategoryStatus: (
+  id: string,
+  isActive: boolean
+) => Promise<{ success: boolean; message: string }>;
 };
 
 const slugTaken = (
@@ -38,13 +46,37 @@ export const useCategoriesStore = create<CategoriesStore>((set, get) => ({
   error: null,
   categories: [],
 
-  fetchCategories: async () => {
+  fetchCategories: async (page=1,limit=10) => 
+    {
     // Keep local edits while the store is mock-backed.
     if (get().categories.length > 0) return;
     set({ loading: true, error: null });
     try {
-      // TODO(api): const res = await categoriesApi.getCategories();
-      set({ categories: CATEGORIES_MOCK, loading: false });
+var res= await categoryApi.getCategories(page,limit)
+    const rawList = Array.isArray(res)
+      ? res
+      : Array.isArray(res?.data)
+        ? res.data
+        : Array.isArray(res?.data?.data)
+          ? res.data.data
+          : [];
+
+    // console.log("Extracted Array:", rawList); // <-- Yahan Array(10) aana chahiye
+
+    // const normalizedList = rawList.map((item: any) => ({
+    //   ...item,
+    //   parentId: item.parentId ?? null,
+    //   // imageUrl: item.imageUrl ?? item.image ?? null,
+    //   // showInMenu: item.showInMenu ?? true,
+    //   // isActive: item.isActive ?? true,
+    //   isCurated: item.isCurated ?? false,
+    //   sortOrder: item.sortOrder ?? 0,
+    //   productCount: item.productCount ?? 0,
+    // }));
+
+
+    // console.log("[RAW LIST",normalizedList)
+    set({ categories: rawList, loading: false });
     } catch (e: any) {
       const message = e?.response?.data?.message ?? "Something went wrong";
       set({ error: message, loading: false });
@@ -53,9 +85,10 @@ export const useCategoriesStore = create<CategoriesStore>((set, get) => ({
 
   createCategory: async (dto) => {
     const { categories } = get();
-    if (slugTaken(categories, dto.slug, dto.parentId)) {
-      return { success: false, message: "Slug already used under this parent" };
-    }
+   // 1. Frontend Validations (jo pehle se likhi hain)
+  if (dto.slug && slugTaken(categories, dto.slug, dto.parentId ?? null)) {
+    return { success: false, message: "Slug already used under this parent" };
+  }
     const parent = categories.find((c) => c.id === dto.parentId);
     if (parent && parent.productCount > 0) {
       return {
@@ -69,43 +102,149 @@ export const useCategoriesStore = create<CategoriesStore>((set, get) => ({
     }
 
     set({ saving: true });
-    // TODO(api): const res = await categoriesApi.createCategory(dto); — dto includes sortOrder.
-    const id = `cat-${Date.now()}`;
-    const withNew = [...categories, { ...dto, id, productCount: 0 }];
+
+
+
+
+try {
+  // Clean payload (agar slug ya parentId empty string ho to null bhejein)
+    const payload: CreateCategoryDto = {
+      name: dto.name,
+      slug: dto.slug || null,
+      imageKey: dto.imageKey || null,
+      parentId: dto.parentId || null,
+      sortOrder: dto.sortOrder,
+    };
+
+    const res = await categoryApi.createCategory(payload);
+    const createdCategory = res.data;
+
+    if (!createdCategory) {
+      set({ saving: false });
+      return {
+        success: false,
+        message: res.message || "Failed to create category",
+      };
+    }
+
+    // 3. Local state mein nayi category add karein aur siblings reorder karein
+    const withNew = [...categories, createdCategory];
+
     set({
-      categories: placeInSiblings(withNew, id, dto.parentId, dto.sortOrder),
+      categories: placeInSiblings(
+        withNew,
+        createdCategory.id,
+        createdCategory.parentId ?? null,
+        createdCategory.sortOrder
+      ),
       saving: false,
     });
-    return { success: true, message: "Category created", id };
+
+    return {
+      success: true,
+      message: res.message || "Category created",
+      id: createdCategory.id,
+    };
+} catch (e:any) {
+  set({ saving: false });
+    const message =
+      e?.response?.data?.message ?? "Failed to create category";
+    return { success: false, message };
+}
+
+
+
+    // // TODO(api): const res = await categoriesApi.createCategory(dto); — dto includes sortOrder.
+    // const id = `cat-${Date.now()}`;
+    // // const withNew = [...categories, { ...dto, id, productCount: 0 }];
+    // // set({
+    // //   categories: placeInSiblings(withNew, id, dto.parentId, dto.sortOrder),
+    // //   saving: false,
+    // // });
+    // return { success: true, message: "Category created", id };
   },
+updateCategory: async (id: string, dto: UpdateCategoryDto) => {
+  const { categories } = get();
+  const current = categories.find((c) => c.id === id);
+  if (!current) return { success: false, message: "Category not found" };
 
-  updateCategory: async (id, dto) => {
-    const { categories } = get();
-    const current = categories.find((c) => c.id === id);
-    if (!current) return { success: false, message: "Category not found" };
+  const parentId =
+    dto.parentId !== undefined ? dto.parentId : current.parentId;
+  const slug = dto.slug ?? current.slug;
 
-    const parentId =
-      dto.parentId !== undefined ? dto.parentId : current.parentId;
-    const slug = dto.slug ?? current.slug;
-    if (slugTaken(categories, slug, parentId, id)) {
-      return { success: false, message: "Slug already used under this parent" };
+  if (slugTaken(categories, slug, parentId, id)) {
+    return { success: false, message: "Slug already used under this parent" };
+  }
+
+  if (
+    dto.sortOrder !== undefined &&
+    (!Number.isInteger(dto.sortOrder) || dto.sortOrder < 1)
+  ) {
+    return {
+      success: false,
+      message: "Sort order must be a whole number from 1",
+    };
+  }
+
+  set({ saving: true });
+  try {
+    const res = await categoryApi.updateCategory(id, dto);
+
+    if (!res.status) {
+      set({ saving: false });
+      return {
+        success: false,
+        message: res.message || "Failed to update category",
+      };
     }
 
-    if (dto.sortOrder !== undefined && (!Number.isInteger(dto.sortOrder) || dto.sortOrder < 1)) {
-      return { success: false, message: "Sort order must be a whole number from 1" };
-    }
+    const updatedItem: Category = res.data
+      ? {
+          ...current,
+          ...res.data,
+          parentId: res.data.parentId ?? null,
+        }
+      : {
+          ...current,
+          name: dto.name ?? current.name,
+          slug: dto.slug ?? current.slug,
+          parentId,
+          imageKey:
+            dto.imageKey !== undefined ? dto.imageKey : current.imageKey,
+          sortOrder: dto.sortOrder ?? current.sortOrder,
+          isActive: dto.isActive ?? current.isActive,
+          // isIndexable: dto.isIndexable ?? current.isIndexable,
+        };
 
-    set({ saving: true });
-    // TODO(api): const res = await categoriesApi.updateCategory(id, dto); — dto includes sortOrder.
     const moved = parentId !== current.parentId;
-    let next = categories.map((c) => (c.id === id ? { ...c, ...dto, parentId } : c));
-    // Close the gap it left at the old level, then place it at the new position.
-    if (moved) next = renumberSiblings(next, current.parentId);
-    next = placeInSiblings(next, id, parentId, dto.sortOrder ?? (moved ? Number.MAX_SAFE_INTEGER : current.sortOrder));
-    set({ categories: next, saving: false });
-    return { success: true, message: "Changes saved" };
-  },
+    let next = categories.map((c) => (c.id === id ? updatedItem : c));
 
+    if (moved) {
+      next = renumberSiblings(next, current.parentId);
+    }
+
+    next = placeInSiblings(
+      next,
+      id,
+      parentId,
+      updatedItem.sortOrder ??
+        (moved ? Number.MAX_SAFE_INTEGER : current.sortOrder)
+    );
+
+    set({ categories: next, saving: false });
+
+    return {
+      success: true,
+      message: res.message || "Changes saved",
+    };
+  } catch (e: unknown) {
+    set({ saving: false });
+    const message =
+      (e as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message ?? "Failed to update category";
+    return { success: false, message };
+  }
+},
   deleteCategory: async (id) => {
     const { categories } = get();
     const current = categories.find((c) => c.id === id);
@@ -123,9 +262,24 @@ export const useCategoriesStore = create<CategoriesStore>((set, get) => ({
       };
     }
 
-    // TODO(api): const res = await categoriesApi.deleteCategory(id);
+
+try {
+  await categoryApi.deleteCategory(id); // DELETE /admin/categories/:id
+
+  // TODO(api): const res = await categoriesApi.deleteCategory(id);
     set({ categories: categories.filter((c) => c.id !== id) });
     return { success: true, message: `${current.name} deleted` };
+}catch (e:any) {
+  set({ saving: false });
+    const message =
+      e?.response?.data?.message ?? "Failed to delete category";
+    return { success: false, message };
+}
+
+
+
+
+    
   },
 
   reorderSiblings: async (orderedIds) => {
@@ -138,4 +292,47 @@ export const useCategoriesStore = create<CategoriesStore>((set, get) => ({
     }));
     return { success: true, message: "Order updated" };
   },
+
+
+
+
+
+
+// 2. Store ke actions mein add karein:
+toggleCategoryStatus: async (id: string, isActive: boolean) => {
+  set({ saving: true });
+  try {
+    const res = await categoryApi.activeCategory(id, isActive);
+
+    if (!res.status) {
+      set({ saving: false });
+      return {
+        success: false,
+        message: res.message || "Failed to update status",
+      };
+    }
+
+    // Local state mein sirf us category ka isActive update karein
+    set((state) => ({
+      categories: state.categories.map((cat) =>
+        cat.id === id ? { ...cat, isActive } : cat
+      ),
+      saving: false,
+    }));
+
+    return {
+      success: true,
+      message: res.message || `Category ${isActive ? "activated" : "deactivated"}`,
+    };
+  } catch (e: unknown) {
+    set({ saving: false });
+    const message =
+      (e as { response?: { data?: { message?: string } } })?.response?.data
+        ?.message ?? "Failed to update category status";
+    return { success: false, message };
+  }
+},
+
+
+
 }));

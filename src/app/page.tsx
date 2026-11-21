@@ -5,6 +5,7 @@ export default function Home() {
   const token = cookies().get("token")?.value;
 
   if (token) {
+    console.log(token,"[Dashboard]")
     redirect("/dashboard");
   }
 

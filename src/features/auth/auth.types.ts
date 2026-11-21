@@ -35,16 +35,15 @@ export type PermissionMap = Record<PermissionCode, boolean>;
 export type AuthUser = {
   id: string;
   email: string;
-  firstName: string;
-  lastName: string;
+  fullName: string;
+  firstName?:string | "";
+    lastName?:string | "";
+
   phone?: string | null;
   role: string;
-  permissions: PermissionMap;
-  company: {
-    id: string;
-    name: string;
-    status: string;
-  } | null;
+  permissions: string[];
+  mfaEnabled: boolean;
+  lastSignInAt: string;
 };
 
 export type LoginDto = {
@@ -53,31 +52,29 @@ export type LoginDto = {
   fcmToken?: string;
 };
 
+export type Staff = {
+  id: string;
+  fullName: string;
+  email: string;
+  role: string;
+
+  permissions: string[];
+  mfaEnabled: boolean;
+  lastSignInAt: string;
+
+    firstName?:string | "";
+    lastName?:string | "";
+};
 export type LoginResponse = {
   status: boolean;
   code: string;
   message: string;
   data?: {
-    status: boolean;
+    mfaRequired: boolean;
     accessToken: string;
-    user: {
-      id: string;
-      firstName: string;
-      lastName: string;
-      email: string;
-      role: {
-        code: string;
-        permissions: {
-          allowed: boolean;
-          feature: { code: string };
-        }[];
-      };
-      company: {
-        id: string;
-        name: string;
-        status: string;
-      } | null;
-    };
+    refreshToken: string;
+    sessionExpiresAt: string;
+    staff: Staff;
   };
 };
 
@@ -89,4 +86,17 @@ export type SetPasswordDto = {
 export type SetPasswordResponse = {
   status: boolean;
   message: string;
+};
+
+
+
+
+
+
+
+export type ProfileResponse = {
+  status: boolean;
+  code: string;
+  message: string;
+  data: AuthUser;
 };

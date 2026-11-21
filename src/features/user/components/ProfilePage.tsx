@@ -26,6 +26,8 @@ type PasswordForm = { current: string; next: string; confirm: string };
 const EMPTY_PASSWORDS: PasswordForm = { current: "", next: "", confirm: "" };
 
 export default function ProfilePage() {
+  const getProfile = useAuthStore((state) => state.getProfile);
+  const accessToken = useAuthStore((state) => state.accessToken);
   const user = useAuthStore((s) => s.user);
   const logout = useAuthStore((s) => s.logout);
   const { saving, changingPassword, updateProfile, changePassword } = useUserStore();
@@ -40,6 +42,13 @@ export default function ProfilePage() {
   const [passwords, setPasswords] = useState<PasswordForm>(EMPTY_PASSWORDS);
   const [passwordErrors, setPasswordErrors] = useState<Partial<PasswordForm>>({});
   const [showPasswords, setShowPasswords] = useState(false);
+
+
+  useEffect(() => {
+  if (accessToken) {
+    getProfile();
+  }
+}, [accessToken, getProfile]);
 
   useEffect(() => {
     if (user) {
@@ -105,6 +114,7 @@ export default function ProfilePage() {
 
   const handleLogout = async () => {
     const token = AUTH_BYPASS ? null : await requestForToken();
+    console.log(token)
     await logout(token || "");
   };
 
