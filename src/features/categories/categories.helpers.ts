@@ -25,7 +25,7 @@ export function getSiblings(list: Category[], parentId: string | null) {
  * that level 1, 2, 3… so there are no gaps or duplicates. `list` must already
  * contain the category with its new parent.
  */
-export function placeInSiblings(list: Category[], id: string, parentId: string | null, position: number): Category[] {
+export function placeInSiblings(list: Category[], id: string, parentId: string | null, position: number, imageKey?: string | null): Category[] {
   const others = getSiblings(list, parentId).filter((c) => c.id !== id);
   const pos = Math.min(Math.max(1, Math.round(position) || 1), others.length + 1);
   const ordered = others.map((c) => c.id);

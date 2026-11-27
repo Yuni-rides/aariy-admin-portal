@@ -17,6 +17,7 @@ import { CreateCategoryDto } from "../categories.types";
 import { CategoryTree } from "./CategoryTree";
 import { CategoryEditor } from "./CategoryEditor";
 import { ReorderSiblingsModal } from "./ReorderSiblingsModal";
+import { mediaApi } from "@/shared/api/media.api";
 
 export default function CategoriesPage() {
   const {
@@ -51,7 +52,6 @@ export default function CategoriesPage() {
   }, [categories, selectedId, creating]);
 
   const tree = useMemo(() => buildCategoryTree(categories), [categories]);
-  console.log("[]tree. ",tree)
   const selected = categories.find((c) => c.id === selectedId);
   const siblings = useMemo(
     () => (selected ? getSiblings(categories, selected.parentId) : []),
@@ -66,13 +66,33 @@ export default function CategoriesPage() {
         ? { title: res.message }
         : { variant: "destructive", title: "Couldn't save", description: res.message },
     );
+const handleSubmit = async (dto: CreateCategoryDto) => {
+    const { file, ...restDto } = dto;
+    let uploadedKey: string | undefined;
 
-  const handleSubmit = async (dto: CreateCategoryDto) => {
+    if (file) {
+      console.log(file)
+      try {
+        const uploaded = await mediaApi.uploadFile(file, {
+          fieldName: "file",
+        });
+        uploadedKey = uploaded.key;
+      } catch (err: any) {
+        const message =
+          err?.response?.data?.message ?? err?.message ?? "Image upload failed";
+        notify({ success: false, message });
+        return; // Upload fail ho to category create/update na karein
+      }
+    }
 
-
+    // Uploaded imageKey ko clean dto ke saath merge karein (baghair `file` object ke)
+    const payload: CreateCategoryDto = {
+      ...restDto,
+      ...(uploadedKey ? { imageKey: uploadedKey } : {}),
+    };
 
     if (creating) {
-      const res = await createCategory(dto);
+      const res = await createCategory(payload);
       notify(res);
       if (res.success && res.id) {
         stopCreate();
@@ -80,7 +100,10 @@ export default function CategoriesPage() {
       }
       return;
     }
-    if (selected) notify(await updateCategory(selected.id, dto));
+
+    if (selected) {
+      notify(await updateCategory(selected.id, payload));
+    }
   };
 
   const handleDelete = async () => {

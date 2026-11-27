@@ -1,5 +1,5 @@
 import { http } from "@/shared/api/http";
-import { CreateCityPayload, CreateCityResponse, CreateCountryDto, CreateCountryResponse, CreateProvinceDto, CreateProvinceResponse, DeleteCityResponse, DeleteCountryResponse, DeleteProvinceResponse, GetLocationsResponse, UpdateCityDto, UpdateCityResponse } from "./country.types";
+import { CreateCityPayload, CreateCityResponse, CreateCountryDto, CreateCountryResponse, CreateProvinceDto, CreateProvinceResponse, DeleteCityResponse, DeleteCountryResponse, DeleteProvinceResponse, GetLocationsResponse, UpdateCityDto, UpdateCityResponse, UpdateProviceOrCountry } from "./country.types";
 
 export const locationsApi = {
 getLocations: async (params?: {
@@ -93,6 +93,17 @@ getLocations: async (params?: {
   updateCity: async (
     cityId: string,
     dto: UpdateCityDto
+  ): Promise<UpdateCityResponse> => {
+    const res = await http.patch<UpdateCityResponse>(
+      `/admin/countries/${cityId}`,
+      dto
+    );
+    return res.data;
+  },
+
+    updateProvinceOrCountry: async (
+    cityId: string,
+    dto: UpdateProviceOrCountry
   ): Promise<UpdateCityResponse> => {
     const res = await http.patch<UpdateCityResponse>(
       `/admin/countries/${cityId}`,

@@ -135,7 +135,8 @@ try {
         withNew,
         createdCategory.id,
         createdCategory.parentId ?? null,
-        createdCategory.sortOrder
+        createdCategory.sortOrder,
+        createdCategory.imageKey ?? null
       ),
       saving: false,
     });
@@ -228,7 +229,8 @@ updateCategory: async (id: string, dto: UpdateCategoryDto) => {
       id,
       parentId,
       updatedItem.sortOrder ??
-        (moved ? Number.MAX_SAFE_INTEGER : current.sortOrder)
+        (moved ? Number.MAX_SAFE_INTEGER : current.sortOrder),
+        
     );
 
     set({ categories: next, saving: false });
@@ -281,6 +283,10 @@ try {
 
     
   },
+  
+
+
+  
 
   reorderSiblings: async (orderedIds) => {
     // TODO(api): const res = await categoriesApi.reorder(orderedIds);

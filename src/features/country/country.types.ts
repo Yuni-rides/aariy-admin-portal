@@ -215,6 +215,10 @@ export type UpdateCityDto = {
   isActive?: boolean;
 };
 
+
+export type UpdateProviceOrCountry = {
+  name?: string;
+};
 export type UpdateCityResponse = {
   status: boolean;
   code: string;

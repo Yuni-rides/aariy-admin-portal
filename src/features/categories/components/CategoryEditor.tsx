@@ -23,6 +23,7 @@ import {
   getSiblings,
   hasChildren,
 } from "../categories.helpers";
+import { env } from "@/core/env/env";
 
 const ROOT = "__root__";
 
@@ -74,6 +75,28 @@ export function CategoryEditor({
   const [errors, setErrors] = useState<{ name?: string; slug?: string; sortOrder?: string }>({});
   const fileRef = useRef<HTMLInputElement>(null);
 
+
+  // 1. Selected File aur Local Preview ke liye alag states
+const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [previewUrl, setPreviewUrl] = useState<string | null>(
+    category?.imageKey ?? null
+  );
+
+  // Jab category selection change ho (Create vs Edit switch), preview aur file reset karein
+ useEffect(() => {
+  if (previewUrl?.startsWith("blob:")) {
+    URL.revokeObjectURL(previewUrl);
+  }
+  setSelectedFile(null);
+
+  if (category?.imageKey) {
+    setPreviewUrl(`${env.NEXT_PUBLIC_MEDIA_BASE_URL}${category.imageKey}`);
+  } else {
+    setPreviewUrl(null);
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [category?.id, isEdit]);
+
   const parentOptions = useMemo(
     () => getParentOptions(categories, category?.id),
     [categories, category?.id],
@@ -86,8 +109,9 @@ export function CategoryEditor({
         name: category.name,
         slug: category.slug,
         parentId: category.parentId,
-        imageKey: category.imageKey ?? null,
-        showInMenu: category.showInMenu,
+imageKey: category.imageKey
+  ? `${env.NEXT_PUBLIC_MEDIA_BASE_URL}${category.imageKey}`
+  : null,        showInMenu: category.showInMenu,
         isActive: category.isActive,
         isCurated: category.isCurated,
         sortOrder: category.sortOrder,
@@ -135,12 +159,24 @@ const maxPosition = siblingCount + 1;
     setForm((f) => ({ ...f, name, slug: slugTouched ? f.slug : slugify(name) }));
   };
 
-  const handleImage = (file?: File) => {
+const handleImage = (file?: File) => {
     if (!file) return;
-    // TODO(api): upload the file and store the returned URL instead.
-    update("imageKey", URL.createObjectURL(file));
+    if (previewUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setSelectedFile(file);
+    setPreviewUrl(URL.createObjectURL(file));
   };
 
+    const handleRemoveImage = () => {
+    if (previewUrl?.startsWith("blob:")) {
+      URL.revokeObjectURL(previewUrl);
+    }
+    setSelectedFile(null);
+    setPreviewUrl(null);
+    update("imageKey", null);
+    if (fileRef.current) fileRef.current.value = "";
+  };
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const next: typeof errors = {};
@@ -151,21 +187,23 @@ const maxPosition = siblingCount + 1;
     else if (!/^[a-z0-9]+(-[a-z0-9]+)*$/.test(form.slug))
       next.slug = "Use lowercase letters, numbers and dashes only";
     setErrors(next);
-    if (Object.keys(next).length) return;
-if (isEdit) {
-    // Edit Mode: Sirf name aur sortOrder bhejein
-    onSubmit({
-      name: form.name.trim(),
-      sortOrder: form.sortOrder,
-    });
-  } else {
-    // Create Mode: Poora payload bhejein
-    onSubmit({
-      ...form,
-      name: form.name.trim(),
-      slug: form.slug?.trim() || null,
-    });
-  }  };
+    if (Object.keys(next).length) return;if (isEdit) {
+      onSubmit({
+        name: form.name.trim(),
+        sortOrder: form.sortOrder,
+        ...(selectedFile ? { file: selectedFile } : {}),
+        ...(form.imageKey === null && !selectedFile ? { imageKey: null } : {}),
+      });
+    } else {
+      onSubmit({
+        ...form,
+        name: form.name.trim(),
+        slug: form.slug?.trim() || null,
+        imageKey: null,
+        file: selectedFile,
+      });
+    }
+};
 
   return (
     <Card className="rounded-2xl p-[18px] shadow-none">
@@ -290,10 +328,10 @@ if (isEdit) {
         </div>
 
         <div className="flex flex-wrap items-center gap-3">
-          {form.imageKey ? (
+          {previewUrl? (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={form.imageKey}
+              src={previewUrl}
               alt=""
               className="h-[72px] w-[72px] rounded-full border object-cover"
             />
@@ -317,14 +355,14 @@ if (isEdit) {
                 className="min-h-11 cursor-pointer rounded-[10px]"
                 onClick={() => fileRef.current?.click()}
               >
-                {form.imageKey ? "Change image" : "Upload circle image"}
+                {previewUrl ? "Change image" : "Upload circle image"}
               </Button>
-              {form.imageKey && (
+              {previewUrl && (
                 <Button
                   type="button"
                   variant="ghost"
                   className="min-h-11 cursor-pointer rounded-[10px]"
-                  onClick={() => update("imageKey", null)}
+                  onClick={handleRemoveImage}
                 >
                   Remove
                 </Button>

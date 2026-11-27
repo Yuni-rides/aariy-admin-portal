@@ -107,18 +107,16 @@ export type CreateParentCategoryResponse = {
 
 export type CreateCategoryDto = {
   name: string;
-   slug?: string | null;
+  slug?: string | null;
   imageKey?: string | null;
-parentId? :string| null;
+  file?: File | null; // <-- Frontend-only field (form se page tak file pass karne ke liye)
+  parentId?: string | null;
   /** Position among its siblings, 1 = first. The others move down to make room. */
   sortOrder: number;
-
-
-  showInMenu? :boolean | null;
-  isActive? : boolean | null;
-  isCurated? :boolean | null
+  showInMenu?: boolean | null;
+  isActive?: boolean | null;
+  isCurated?: boolean | null;
 };
-
 
 export type DeleteCategoryResponse = {
   status: boolean;
