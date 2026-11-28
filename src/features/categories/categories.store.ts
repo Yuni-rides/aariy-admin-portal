@@ -7,6 +7,7 @@ import {
 // import { CATEGORIES_MOCK } from "./categories.mock";
 import { findCategoryRecursive, hasChildren, hasChildrenRecursive, placeInSiblings, removeCategoryRecursive, renumberSiblings, replaceCategoryRecursive } from "./categories.helpers";
 import { categoryApi } from "./categories.api";
+import { PaginationMeta } from "../country/country.types";
 
 type Result = { success: boolean; message: string };
 
@@ -15,13 +16,23 @@ type CategoriesStore = {
   saving: boolean;
   error: string | null;
   categories: Category[];
+   meta: PaginationMeta;
+  
 
-  fetchCategories: () => Promise<void>;
+  fetchCategories: (
+
+    params?: {
+    page?: number;
+    limit?: number;
+    force?: boolean;
+  }
+  ) => Promise<void>;
   createCategory: (dto: CreateCategoryDto) => Promise<Result & { id?: string }>;
   updateCategory: (id: string, dto: UpdateCategoryDto) => Promise<Result>;
   deleteCategory: (id: string) => Promise<Result>;
   reorderSiblings: (orderedIds: string[]) => Promise<Result>;
 
+  setPage: (page: number) => Promise<void>;
 
   // 1. CategoriesState interface mein add karein:
 toggleCategoryStatus: (
@@ -45,17 +56,32 @@ export const useCategoriesStore = create<CategoriesStore>((set, get) => ({
   saving: false,
   error: null,
   categories: [],
+ meta: {
+    page: 1,
+    limit: 10,
+    total: 0,
+  },
+  fetchCategories: async (
+  params?: {
+    page?: number;
+    limit?: number;
+    search?: string;
+    force?: boolean;
+  },
+) => {
+  const currentMeta = get().meta;
+  const page = Number(params?.page) || currentMeta.page || 1;
+  const limit = Number(params?.limit) || currentMeta.limit || 10;
 
-  fetchCategories: async (page=1,limit=10) => 
-    {
-    // Keep local edits while the store is mock-backed.
-    if (get().categories.length > 0) return;
-    set({ loading: true, error: null });
-    try {
-var res= await categoryApi.getCategories(page,limit)
+  // Sirf tab skip karein jab initial/cached state ho aur force na ho
+  if (!params?.force && get().categories.length > 0 && page === currentMeta.page) {
+    return;
+  }
 
+  set({ loading: true, error: null });
+  try {
+    const res = await categoryApi.getCategories(page, limit);
 
-console.log(Array.isArray(res?.data?.data));
     const rawList = Array.isArray(res)
       ? res
       : Array.isArray(res?.data)
@@ -64,16 +90,37 @@ console.log(Array.isArray(res?.data?.data));
           ? res.data.data
           : [];
 
+   const apiMeta =
+  (res as any)?.data?.meta ??
+  (res as any)?.meta ??
+  (res as any)?.data?.data?.meta ??
+  {};
 
+    set({
+      categories: rawList,
+      meta: {
+        page: Number(apiMeta.page) || page,
+        limit: Number(apiMeta.limit) || limit,
+        total:
+          typeof apiMeta.total === "number"
+            ? apiMeta.total
+            : rawList.length,
+      },
+      loading: false,
+    });
+  } catch (e: any) {
+    const message = e?.response?.data?.message ?? "Something went wrong";
+    set({ error: message, loading: false });
+  }
+},
 
-    // console.log("[RAW LIST",normalizedList)
-    set({ categories: rawList, loading: false });
-    } catch (e: any) {
-      const message = e?.response?.data?.message ?? "Something went wrong";
-      set({ error: message, loading: false });
-    }
-  },
-
+setPage: async (page: number) => {
+  await get().fetchCategories({
+    page,
+    limit: get().meta.limit,
+    force: true,
+  });
+},
   createCategory: async (dto) => {
     const { categories } = get();
    // 1. Frontend Validations (jo pehle se likhi hain)

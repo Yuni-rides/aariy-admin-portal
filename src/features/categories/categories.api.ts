@@ -5,10 +5,13 @@ import { ActiveInActiceCategoryResponse, CategoryField, CreateCategoryDto, Creat
 export const categoryApi = {
   getCategories: async (
 
-     page = 1,
-    limit = 10,
+       page?: number,
+    limit?: number,
 parentId?: string | null
   ): Promise<GetCategoriesResponse> => {
+
+
+    
       const params = new URLSearchParams();
 
     params.append("page", String(page));

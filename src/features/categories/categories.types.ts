@@ -99,10 +99,16 @@ export type GetCategoriesResponse = {
   message: string;
  data: {
     data: Category[];
+        meta: PaginationMeta;
+    
  }
 };
 
-
+export type PaginationMeta = {
+  page: number;
+  limit: number;
+  total: number;
+};
 export type CreateParentCategoryResponse = {
   status: boolean;
   code:string;

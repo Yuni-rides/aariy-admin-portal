@@ -18,10 +18,13 @@ import { CategoryTree } from "./CategoryTree";
 import { CategoryEditor } from "./CategoryEditor";
 import { ReorderSiblingsModal } from "./ReorderSiblingsModal";
 import { mediaApi } from "@/shared/api/media.api";
+import { Pagination } from "@/components/ui/Pagination";
 
 export default function CategoriesPage() {
   const {
     categories,
+        meta,
+setPage,
     loading,
     saving,
     fetchCategories,
@@ -194,6 +197,15 @@ const toggleCategoryStatus = useCategoriesStore((s) => s.toggleCategoryStatus);
               }}
             />
           )}
+
+
+  <Pagination
+                      page={meta.page}
+                      total={meta.total}
+                      limit={meta.limit}
+                      onPageChange={(newPage) => setPage(newPage)}
+                    />
+            
         </Card>
 
         <div className="lg:col-span-2">
