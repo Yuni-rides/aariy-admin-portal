@@ -5,6 +5,7 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Check, Trash2, X } from "lucide-react";
 import { StatusBadge } from "@/components/ui/StatusBadge";
+import { ReasonDialog } from "@/components/ui/ReasonDialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/Select";
 import { toast } from "@/hooks/useToast";
 import { cn } from "@/lib/utils";
@@ -23,6 +24,8 @@ import { SizeChartDialog } from "@/features/sizeCharts/components/SizeChartDialo
 import { useProductsStore } from "../products.store";
 import type { AttributeValue, SaveProductDto } from "../products.types";
 import {
+  productStatusLabelMap,
+  productStatusToneMap,
   MAX_DISPATCH_DAYS,
   MAX_VARIANTS,
   META_DESCRIPTION_MAX,
@@ -40,8 +43,10 @@ import { FormImage, ProductPhotosCard } from "./ProductPhotosCard";
 import { FieldError, FieldHint, FieldLabel, FormCard, cellSelectClass, ds, selectClass } from "./ProductFormParts";
 
 type ProductFormPageProps = {
-  /** Present when editing an existing product. */
+  /** Present when editing or viewing an existing product. */
   productId?: string;
+  /** "view" shows the same screen read-only, with Approve / Reject instead of Save. */
+  mode?: "edit" | "view";
 };
 
 /** Variant row as typed in the form (numbers stay strings until saving). */
@@ -110,11 +115,14 @@ const isBlank = (v: AttributeValue | undefined) =>
   v === undefined || v === "" || (Array.isArray(v) && v.length === 0) || (typeof v === "number" && Number.isNaN(v));
 const brandOf = (s?: Seller) => s?.brand ?? s?.brands?.[0] ?? null;
 
-export default function ProductFormPage({ productId }: ProductFormPageProps) {
+export default function ProductFormPage({ productId, mode = "edit" }: ProductFormPageProps) {
   const router = useRouter();
   const isEdit = !!productId;
+  const readOnly = mode === "view" && isEdit;
 
-  const { product, saving, getProductById, createProduct, updateProduct } = useProductsStore();
+  const { product, saving, getProductById, createProduct, updateProduct, approveProduct, rejectProduct } =
+    useProductsStore();
+  const [rejectOpen, setRejectOpen] = useState(false);
   const { sellers: storeSellers, fetchSellers } = useSellersStore();
   const { categories, fetchCategories } = useCategoriesStore();
   const { charts, fetchCharts, createChart, saving: savingChart } = useSizeChartsStore();
@@ -400,6 +408,22 @@ export default function ProductFormPage({ productId }: ProductFormPageProps) {
     .filter((r) => r.qty > 0 || form.variants.length === 1);
   const totalStock = stockRows.reduce((t, r) => t + r.qty, 0);
 
+  const currentProduct = product && product.id === productId ? product : null;
+
+  // After a decision, go back to the list so the next product can be reviewed.
+  const handleApprove = async () => {
+    const res = await approveProduct(productId!);
+    toast(res.success ? { title: res.message } : { variant: "destructive", title: "Action failed", description: res.message });
+    if (res.success) router.push("/products");
+  };
+
+  const handleReject = async (reason: string) => {
+    const res = await rejectProduct(productId!, reason);
+    toast(res.success ? { title: res.message } : { variant: "destructive", title: "Action failed", description: res.message });
+    if (res.success) router.push("/products");
+    return res.success;
+  };
+
   return (
     <div className="mx-auto flex w-full max-w-[1180px] flex-col gap-6 text-[#1F1A17]">
       {/* Header */}
@@ -409,8 +433,31 @@ export default function ProductFormPage({ productId }: ProductFormPageProps) {
             ← Products
           </Link>
           <h1 className="m-0 text-[26px] font-bold">{isEdit ? form.name || "Edit product" : "Add product for a seller"}</h1>
-          <p className={ds.sub}>The product belongs to the seller&apos;s brand and shows in their vendor portal.</p>
+          <p className={ds.sub}>
+            {readOnly
+              ? "Check the details below, then approve or reject the product."
+              : "The product belongs to the seller’s brand and shows in their vendor portal."}
+          </p>
         </div>
+        {readOnly ? (
+          <div className="flex flex-wrap items-center gap-2.5">
+            {currentProduct && (
+              <StatusBadge tone={productStatusToneMap[currentProduct.status]}>
+                {productStatusLabelMap[currentProduct.status]}
+              </StatusBadge>
+            )}
+            {currentProduct && currentProduct.status !== "REJECTED" && (
+              <button type="button" disabled={saving} className={cn(ds.btn, ds.ghost)} onClick={() => setRejectOpen(true)}>
+                Reject
+              </button>
+            )}
+            {currentProduct && currentProduct.status !== "APPROVED" && (
+              <button type="button" disabled={saving} className={cn(ds.btn, ds.primary)} onClick={handleApprove}>
+                {saving ? "Approving..." : "Approve"}
+              </button>
+            )}
+          </div>
+        ) : (
         <div className="flex flex-wrap items-center gap-2.5">
           {dirty && <StatusBadge tone="warning">Not saved</StatusBadge>}
           <button type="button" disabled={saving} className={cn(ds.btn, ds.ghost)} onClick={() => save(false)}>
@@ -426,9 +473,23 @@ export default function ProductFormPage({ productId }: ProductFormPageProps) {
             {saving ? "Saving..." : "Save & publish"}
           </button>
         </div>
+        )}
       </div>
 
-      <div className="flex flex-wrap items-start gap-6">
+      {readOnly && currentProduct?.rejectionReason && (
+        <p role="status" className="m-0 rounded-[10px] bg-[#FDE5E5] px-4 py-3 text-sm text-[#A12A2A]">
+          <span className="font-semibold">Rejected:</span> {currentProduct.rejectionReason}
+        </p>
+      )}
+
+      <fieldset
+        disabled={readOnly}
+        className={cn(
+          "m-0 flex min-w-0 flex-wrap items-start gap-6 border-0 p-0",
+          readOnly &&
+            "[&_:disabled]:cursor-default [&_:disabled]:opacity-100 [&_input:disabled]:bg-[#FBF8F6] [&_input:disabled]:text-[#1F1A17] [&_textarea:disabled]:bg-[#FBF8F6] [&_textarea:disabled]:text-[#1F1A17]",
+        )}
+      >
         {/* Main column */}
         <div className="flex min-w-0 flex-[999_1_560px] flex-col gap-6">
           <FormCard id="h-seller" title="Seller and brand">
@@ -856,6 +917,7 @@ export default function ProductFormPage({ productId }: ProductFormPageProps) {
           <ProductPhotosCard
             images={form.images}
             uploading={uploading}
+            readOnly={readOnly}
             error={errors.images}
             onAdd={addImages}
             onChange={(images) => update("images", images)}
@@ -904,12 +966,14 @@ export default function ProductFormPage({ productId }: ProductFormPageProps) {
                 </table>
               </div>
             )}
-            <button type="button" disabled={!form.sellerId} className={cn(ds.btn, ds.soft)} onClick={() => setChartDialogOpen(true)}>
-              + New size chart
-            </button>
+            {!readOnly && (
+              <button type="button" disabled={!form.sellerId} className={cn(ds.btn, ds.soft)} onClick={() => setChartDialogOpen(true)}>
+                + New size chart
+              </button>
+            )}
           </FormCard>
 
-          <FormCard id="h-check" title="Before publishing">
+          <FormCard id="h-check" title={readOnly ? "Review checklist" : "Before publishing"}>
             <ul className="m-0 flex list-none flex-col gap-2.5 p-0 text-sm">
               {checklist.map((c) => (
                 <li key={c.label} className={cn("flex items-center gap-2.5", !c.done && "text-[#8C2A1B]")}>
@@ -922,12 +986,25 @@ export default function ProductFormPage({ productId }: ProductFormPageProps) {
                 </li>
               ))}
             </ul>
+            {!readOnly && (
             <FieldHint>
               Save draft works any time. Save &amp; publish puts the product live at once; the seller must be approved and the brand active.
             </FieldHint>
+            )}
           </FormCard>
         </aside>
-      </div>
+      </fieldset>
+
+      <ReasonDialog
+        open={rejectOpen}
+        title={`Reject ${form.name || "product"}`}
+        description="The seller sees this reason and can fix the product and submit it again."
+        confirmLabel="Reject product"
+        saving={saving}
+        requiredMessage="Add a reason so the seller knows what to fix"
+        onClose={() => setRejectOpen(false)}
+        onConfirm={handleReject}
+      />
 
       <SizeChartDialog
         open={chartDialogOpen}
