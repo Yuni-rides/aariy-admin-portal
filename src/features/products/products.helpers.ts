@@ -30,18 +30,19 @@ export const getProductPrice = (p: Pick<Product, "variants">) =>
 export const getProductSummary = (p: Product) => {
   const parts = [
     `${p.variants.length} variant${p.variants.length === 1 ? "" : "s"}`,
-    p.sizeChart.length ? "size chart added" : "no size chart",
+    p.sizeChartId ? "size chart added" : "no size chart",
     `${p.images.length} image${p.images.length === 1 ? "" : "s"}`,
   ];
   return parts.join(" · ");
 };
 
-export const AFTER_SAVE_OPTIONS = [
-  { value: "APPROVED", label: "Approved and live" },
-  { value: "DRAFT", label: "Draft for the seller to finish" },
-] as const;
-
-export const MAX_PRODUCT_IMAGES = 8;
+/** Photos: at least MIN to publish, at most MAX. */
+export const MIN_PUBLISH_IMAGES = 3;
+export const MAX_PRODUCT_IMAGES = 12;
+export const MAX_VARIANTS = 60;
+export const MAX_DISPATCH_DAYS = 60;
+/** SKU: letters, digits, dot, dash and underscore; unique for the seller. */
+export const SKU_PATTERN = /^[A-Za-z0-9._-]+$/;
 
 export const newVariantId = () =>
   `v-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
@@ -52,8 +53,8 @@ export const newVariantId = () =>
 export const STOREFRONT_ORIGIN = "https://www.aariee.com";
 
 /** Roughly what Google shows before cutting the text off with "…". */
-export const META_TITLE_MAX = 60;
-export const META_DESCRIPTION_MAX = 155;
+export const META_TITLE_MAX = 70;
+export const META_DESCRIPTION_MAX = 160;
 
 export const PRODUCT_SLUG_PATTERN = /^[a-z0-9]+(-[a-z0-9]+)*$/;
 
