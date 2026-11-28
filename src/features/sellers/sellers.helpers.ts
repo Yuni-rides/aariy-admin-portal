@@ -9,7 +9,8 @@ import {
 } from "./sellers.types";
 
 export const sellerStatusLabelMap: Record<SellerStatus, string> = {
-  KYB_PENDING: "KYB pending",
+  ONBOARDING: "Onboarding",
+  SUBMITTED: "Submitted",
   APPROVED: "Approved",
   CHANGES_REQUESTED: "Changes requested",
   REJECTED: "Rejected",
@@ -17,7 +18,8 @@ export const sellerStatusLabelMap: Record<SellerStatus, string> = {
 };
 
 export const sellerStatusToneMap: Record<SellerStatus, StatusTone> = {
-  KYB_PENDING: "warning",
+  ONBOARDING: "neutral",
+  SUBMITTED: "warning",
   APPROVED: "success",
   CHANGES_REQUESTED: "danger",
   REJECTED: "danger",
@@ -45,21 +47,22 @@ export const SELLER_TIER_OPTIONS = [
   })),
 ];
 
-export const kybDocumentLabelMap: Record<KybDocumentType, string> = {
-  CNIC_FRONT: "CNIC / ID front",
-  CNIC_BACK: "CNIC / ID back",
+export const kybDocumentLabelMap: Record<string, string> = {
+  NATIONAL_ID_FRONT: "CNIC / ID front",
+  NATIONAL_ID_BACK: "CNIC / ID back",
+  BANK_PROOF: "Bank proof",
+  BRAND_AUTHORISATION: "Brand authorisation",
   TAX_CERTIFICATE: "Tax certificate",
   SALES_TAX_CERTIFICATE: "Sales tax certificate",
-  BANK_PROOF: "Bank proof",
-  BRAND_AUTHORIZATION: "Brand authorization",
+  PARTNERSHIP_DEED: "Partnership deed",
   OTHER: "Other document",
 };
-
 /** Documents every seller must have before it can be approved. */
 export const REQUIRED_KYB_DOCUMENTS: Exclude<KybDocumentType, "OTHER">[] = [
-  "CNIC_FRONT",
-  "CNIC_BACK",
+  "NATIONAL_ID_FRONT",
+  "NATIONAL_ID_BACK",
   "TAX_CERTIFICATE",
+  "BRAND_AUTHORISATION",
   "SALES_TAX_CERTIFICATE",
   "BANK_PROOF",
   "BRAND_AUTHORIZATION",
@@ -122,9 +125,9 @@ export const kybDocumentStatusToneMap: Record<KybDocumentStatus, StatusTone> = {
 };
 
 export const reviewActionResultMap: Record<SellerReviewAction, SellerStatus> = {
-  APPROVE: "APPROVED",
+  APPROVED: "APPROVED",
   REQUEST_CHANGES: "CHANGES_REQUESTED",
-  REJECT: "REJECTED",
+  REJECTED: "REJECTED",
   SUSPEND: "SUSPENDED",
   REACTIVATE: "APPROVED",
 };
@@ -132,8 +135,8 @@ export const reviewActionResultMap: Record<SellerReviewAction, SellerStatus> = {
 /** Actions that must carry a note so the seller knows what to fix. */
 export const NOTE_REQUIRED_ACTIONS: SellerReviewAction[] = [
   "REQUEST_CHANGES",
-  "REJECT",
+  "REJECTED",
   "SUSPEND",
 ];
 
-export const needsReview = (status: SellerStatus) => status === "KYB_PENDING";
+export const needsReview = (status: SellerStatus) => status === "SUBMITTED";

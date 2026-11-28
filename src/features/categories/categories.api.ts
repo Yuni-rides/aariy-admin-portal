@@ -19,7 +19,7 @@ parentId?: string | null
       params.append("parentId", parentId);
     }
 
-const res = await http.get<GetCategoriesResponse>(`/admin/categories?${params.toString()}`);
+const res = await http.get<GetCategoriesResponse>(`/admin/categories/tree?${params.toString()}`);
 
     console.log(res.data,"[Get Categories]")
     return res.data;
@@ -29,7 +29,7 @@ const res = await http.get<GetCategoriesResponse>(`/admin/categories?${params.to
   createCategory: async (payload: CreateCategoryDto): Promise<CreateParentCategoryResponse> => {
     const res = await http.post<CreateParentCategoryResponse>("admin/categories", payload);
 
-    console.log(res.data)
+    console.log( "[create category Payload",res.data)
     return res.data;
   },
 

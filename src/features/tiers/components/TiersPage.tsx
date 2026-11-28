@@ -35,6 +35,7 @@ import {
 } from "../tiers.helpers";
 import { CommissionRuleModal } from "./CommissionRuleModal";
 import { TaxRuleModal } from "./TaxRuleModal";
+import { SELLERS_MOCK } from "@/features/dashboard/dashboard.mock";
 
 type Result = { success: boolean; message: string };
 type RuleLike = { status: string; effectiveFrom: string; effectiveTo?: string | null; approval?: Approval | null };
@@ -140,7 +141,7 @@ export default function TiersPage() {
     approveTaxRule,
     rejectTaxRule,
   } = useTiersStore();
-  const { allSellers, fetchSellers } = useSellersStore();
+  // const { allSellers, fetchSellers } = useSellersStore();
   const { categories, fetchCategories } = useCategoriesStore();
 
   const [commissionModal, setCommissionModal] = useState<{ rule?: CommissionRule } | null>(null);
@@ -150,12 +151,21 @@ export default function TiersPage() {
   const [showRetiredTax, setShowRetiredTax] = useState(false);
   const [checkSeller, setCheckSeller] = useState(NONE);
   const [checkCategory, setCheckCategory] = useState(NONE);
+const { sellers: storeSellers, fetchSellers } = useSellersStore();
 
   useEffect(() => {
     fetchTiers();
-    fetchSellers();
+    // fetchSellers();
     fetchCategories();
-  }, [fetchTiers, fetchSellers, fetchCategories]);
+  }, [fetchTiers, 
+    // fetchSellers,
+     fetchCategories]);
+
+       const allSellers = useMemo(
+         () => (storeSellers.length ? storeSellers : SELLERS_MOCK),
+         [storeSellers],
+       );
+     
 
   const notify = (res: Result) => {
     toast(

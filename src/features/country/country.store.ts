@@ -239,26 +239,72 @@ const payload: CreateCountryDto = {
   }
 
   },
+updateCountry: async (id, dto) => {
+    set({ saving: true, error: null });
 
-  updateCountry: async (id, dto) => {
-    set({ saving: true });
-    // TODO(api): await locationsApi.updateCountry(id, dto)
-    set((state) => ({
-      countries: state.tree.map((c) =>
-        c.id === id
-          ? {
-              ...c,
-              ...(dto.name !== undefined ? { name: dto.name.trim() } : {}),
-              ...(dto.isActive !== undefined ? { isActive: dto.isActive } : {}),
-            }
-          : c
-      ),
-      saving: false,
-    }));
+    try {
+      const res = await locationsApi.updateProvinceOrCountry(id, dto);
 
-    return { success: true, message: "Country updated" };
+      if (!res.status) {
+        set({ saving: false });
+        return {
+          success: false,
+          message: res.message || "Failed to update country",
+        };
+      }
+
+      const updatedFromApi = (
+        res as { data?: { name?: string; code?: string; isActive?: boolean } }
+      ).data;
+
+      const applyCountryPatch = <
+        T extends { id: string; name: string; code?: string; isActive?: boolean },
+      >(
+        item: T
+      ): T => {
+        if (item.id !== id) return item;
+
+        return {
+          ...item,
+          ...(updatedFromApi?.name !== undefined
+            ? { name: updatedFromApi.name.trim() }
+            : dto.name !== undefined
+              ? { name: dto.name.trim() }
+              : {}),
+          ...(updatedFromApi?.code !== undefined
+            ? { code: updatedFromApi.code.trim().toUpperCase() }
+            : dto.code !== undefined
+              ? { code: dto.code.trim().toUpperCase() }
+              : {}),
+          ...(updatedFromApi?.isActive !== undefined
+            ? { isActive: updatedFromApi.isActive }
+            : dto.isActive !== undefined
+              ? { isActive: dto.isActive }
+              : {}),
+        };
+      };
+
+     set((state) => ({
+        tree: state.tree.map(applyCountryPatch),
+        saving: false,
+      }));
+      return {
+        success: true,
+        message: res.message || "Country updated",
+      };
+    } catch (e: unknown) {
+      const errData = (
+        e as { response?: { data?: { message?: string | string[] } } }
+      )?.response?.data;
+
+      const message = Array.isArray(errData?.message)
+        ? errData.message.join(", ")
+        : errData?.message ?? "Failed to update country";
+
+      set({ saving: false, error: message });
+      return { success: false, message };
+    }
   },
-
   deleteCountry: async (id) => {
     const target = get().tree.find((c) => c.id === id);
     if (!target) return { success: false, message: "Country not found" };
@@ -393,35 +439,67 @@ const deletedId = res.data?.id ?? id;
       return { success: false, message };
     }
   },
+updateProvince: async (countryId, provinceId, dto) => {
+    set({ saving: true, error: null });
 
-  updateProvince: async (countryId, provinceId, dto) => {
-    set({ saving: true });
-    // TODO(api): await locationsApi.updateProvince(provinceId, dto)
-    set((state) => ({
-      tree: state.tree.map((c) =>
-        c.id === countryId
-          ? {
-              ...c,
-              provinces: c.provinces.map((p) =>
-                p.id === provinceId
-                  ? {
-                      ...p,
-                      ...(dto.name !== undefined
-                        ? { name: dto.name.trim() }
-                        : {}),
-                      ...(dto.code !== undefined
-                        ? { code: dto.code.trim().toUpperCase() }
-                        : {}),
-                    }
-                  : p
-              ),
-            }
-          : c
-      ),
-      saving: false,
-    }));
+    try {
+      const res = await locationsApi.updateProvinceOrCountry(provinceId, dto);
 
-    return { success: true, message: "Province updated" };
+      if (!res.status) {
+        set({ saving: false });
+        return {
+          success: false,
+          message: res.message || "Failed to update province",
+        };
+      }
+
+      const updatedFromApi = (res as { data?: { name?: string; code?: string } })
+        .data;
+
+      set((state) => ({
+        tree: state.tree.map((c) =>
+          c.id === countryId
+            ? {
+                ...c,
+                provinces: c.provinces.map((p) =>
+                  p.id === provinceId
+                    ? {
+                        ...p,
+                        ...(updatedFromApi?.name !== undefined
+                          ? { name: updatedFromApi.name.trim() }
+                          : dto.name !== undefined
+                            ? { name: dto.name.trim() }
+                            : {}),
+                        ...(updatedFromApi?.code !== undefined
+                          ? { code: updatedFromApi.code.trim().toUpperCase() }
+                          : dto.code !== undefined
+                            ? { code: dto.code.trim().toUpperCase() }
+                            : {}),
+                      }
+                    : p
+                ),
+              }
+            : c
+        ),
+        saving: false,
+      }));
+
+      return {
+        success: true,
+        message: res.message || "Province updated",
+      };
+    } catch (e: unknown) {
+      const errData = (
+        e as { response?: { data?: { message?: string | string[] } } }
+      )?.response?.data;
+
+      const message = Array.isArray(errData?.message)
+        ? errData.message.join(", ")
+        : errData?.message ?? "Failed to update province";
+
+      set({ saving: false, error: message });
+      return { success: false, message };
+    }
   },
 
  deleteProvince: async (countryId: string, provinceId: string) => {

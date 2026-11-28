@@ -1,15 +1,21 @@
+
+
+
+export type CategoryField = {
+  id: string;
+  code: string;
+  name: string;
+  type: CategoryFieldType;
+  options: string[] | null;
+  unit: string | null;
+  isRequired: boolean;
+  isVariant: boolean;
+  isFilterable: boolean;
+  sortOrder: number;
+  isActive: boolean;
+};
 export type Category = {
-  // id: string;
-  // name: string;
-  // slug: string;
-  // parentId: string | null;
-  // imageUrl?: string | null;
-  // showInMenu: boolean;
-  // isActive: boolean;
-  // /** Curated categories are indexed by search engines. */
-  // isCurated: boolean;
-  // sortOrder: number;
-  // productCount: number;
+
 
    id: string;
      parentId: string | null;
@@ -40,6 +46,7 @@ updatedAt? :Date | null
 
   breadcrumb?: CategoryBreadcrumbItem[];
   children?: Category[];
+  fields?: CategoryField[];
 };
 
 
@@ -103,22 +110,36 @@ export type CreateParentCategoryResponse = {
 
   data?: Category;
 };
+export type CategoryFieldType =
+  | "TEXT"
+  | "NUMBER"
+  | "DROPDOWN"
+  | "MULTI_SELECT"
+  | "BOOLEAN";
 
+export type CategoryFieldPayload = {
+  name: string;
+  type: CategoryFieldType;
+  options?: string[];
+  isRequired?: boolean;
+  isVariant?: boolean;
+  isFilterable?: boolean;
+};
 
 export type CreateCategoryDto = {
   name: string;
-   slug?: string | null;
+  slug?: string | null;
   imageKey?: string | null;
-parentId? :string| null;
+  /** Frontend-only field (form se page tak file pass karne ke liye) */
+  file?: File | null;
+  parentId?: string | null;
   /** Position among its siblings, 1 = first. The others move down to make room. */
   sortOrder: number;
-
-
-  showInMenu? :boolean | null;
-  isActive? : boolean | null;
-  isCurated? :boolean | null
+  showInMenu?: boolean | null;
+  isActive?: boolean | null;
+  isCurated?: boolean | null;
+  fields?: CategoryFieldPayload[];
 };
-
 
 export type DeleteCategoryResponse = {
   status: boolean;

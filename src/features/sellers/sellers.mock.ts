@@ -1,161 +1,161 @@
-// TEMPORARY: mock data until the sellers API is ready.
-// Delete this file once sellers.api.ts is wired into the store.
-import { Seller, KybDocument, KybDocumentStatus } from "./sellers.types";
-import { REQUIRED_KYB_DOCUMENTS } from "./sellers.helpers";
+// // TEMPORARY: mock data until the sellers API is ready.
+// // Delete this file once sellers.api.ts is wired into the store.
+// import { Seller, KybDocument, KybDocumentStatus } from "./sellers.types";
+// import { REQUIRED_KYB_DOCUMENTS } from "./sellers.helpers";
 
-const docs = (
-  sellerId: string,
-  overrides: Partial<Record<(typeof REQUIRED_KYB_DOCUMENTS)[number], KybDocumentStatus>> = {},
-): KybDocument[] =>
-  REQUIRED_KYB_DOCUMENTS.map((type) => ({
-    id: `${sellerId}-${type}`,
-    type,
-    status: overrides[type] ?? "UPLOADED",
-  }));
+// const docs = (
+//   sellerId: string,
+//   overrides: Partial<Record<(typeof REQUIRED_KYB_DOCUMENTS)[number], KybDocumentStatus>> = {},
+// ): KybDocument[] =>
+//   REQUIRED_KYB_DOCUMENTS.map((type) => ({
+//     id: `${sellerId}-${type}`,
+//     type,
+//     status: overrides[type] ?? "UPLOADED",
+//   }));
 
-const BASE_SELLERS: Seller[] = [
-  {
-    id: "maria-b",
-    name: "Maria B",
-    legalName: "[Legal name]",
-    contactEmail: "partners@mariab.example",
-    contactPhone: "+92 300 0000001",
-    idNumber: "35202-0000000-1",
-    ntnNumber: "1234567-1",
-    productCount: 48,
-    tier: "STANDARD",
-    status: "APPROVED",
-    documents: docs("maria-b"),
-    slug: "maria-b",
-    rating: 4.6,
-    reviewCount: 5200,
-    createdAt: "2026-08-02T09:00:00Z",
-  },
-  {
-    id: "noor-jahan",
-    name: "Noor Jahan",
-    legalName: "[Legal name]",
-    contactEmail: "hello@noorjahan.example",
-    contactPhone: "+92 300 0000002",
-    idNumber: "42101-0000000-2",
-    ntnNumber: "2345678-2",
-    productCount: 31,
-    tier: "STANDARD",
-    status: "KYB_PENDING",
-    documents: [
-      ...docs("noor-jahan"),
-      {
-        id: "noor-jahan-other-1",
-        type: "OTHER",
-        status: "UPLOADED",
-        title: "Trademark certificate",
-      },
-    ],
-    createdAt: "2026-11-03T12:30:00Z",
-  },
-  {
-    id: "monanza",
-    name: "Monanza",
-    legalName: "[Legal name]",
-    contactEmail: "ops@monanza.example",
-    contactPhone: "+92 300 0000003",
-    idNumber: "61101-0000000-3",
-    ntnNumber: "3456789-3",
-    productCount: 0,
-    tier: "STANDARD",
-    status: "CHANGES_REQUESTED",
-    documents: docs("monanza", {
-      SALES_TAX_CERTIFICATE: "MISSING",
-      BRAND_AUTHORIZATION: "REJECTED",
-    }),
-    reviewNote: "Sales tax certificate missing; brand authorization letter unsigned.",
-    createdAt: "2026-10-21T15:10:00Z",
-  },
-  {
-    id: "j-dot",
-    name: "J.",
-    legalName: "[Legal name]",
-    contactEmail: "vendors@j.example",
-    contactPhone: "+92 300 0000004",
-    idNumber: "35201-0000000-4",
-    ntnNumber: "4567890-4",
-    productCount: 22,
-    tier: "STANDARD",
-    status: "SUSPENDED",
-    documents: docs("j-dot"),
-    reviewNote: "Suspended pending dispute review.",
-    createdAt: "2026-06-14T08:45:00Z",
-  },
-  {
-    id: "zarveen-couture",
-    name: "Zarveen Couture",
-    legalName: "[Legal name]",
-    contactEmail: "hello@zarveen.example",
-    contactPhone: "+92 300 0000005",
-    idNumber: "35202-0000000-5",
-    ntnNumber: "5678901-5",
-    productCount: 64,
-    tier: "STANDARD",
-    status: "APPROVED",
-    documents: docs("zarveen-couture"),
-    slug: "zarveen-couture",
-    rating: 4.7,
-    reviewCount: 3000,
-    activeSale: {
-      title: "Festive sale",
-      discountPercent: 20,
-      startsAt: "2026-11-05T00:00:00Z",
-      endsAt: "2026-11-20T23:59:00Z",
-    },
-    createdAt: "2026-07-10T09:00:00Z",
-  },
-  {
-    id: "noor-e-saba",
-    name: "Noor-e-Saba",
-    legalName: "[Legal name]",
-    contactEmail: "team@noorsaba.example",
-    contactPhone: "+92 300 0000006",
-    idNumber: "42101-0000000-6",
-    ntnNumber: "6789012-6",
-    productCount: 27,
-    tier: "STANDARD",
-    status: "APPROVED",
-    documents: docs("noor-e-saba"),
-    slug: "noor-e-saba",
-    rating: 4.4,
-    reviewCount: 860,
-    activeSale: {
-      title: "Winter edit",
-      discountPercent: 15,
-      startsAt: "2026-11-01T00:00:00Z",
-      endsAt: "2026-11-30T23:59:00Z",
-    },
-    createdAt: "2026-08-18T09:00:00Z",
-  },
-];
+// const BASE_SELLERS: Seller[] = [
+//   {
+//     id: "maria-b",
+//     name: "Maria B",
+//     legalName: "[Legal name]",
+//     contactEmail: "partners@mariab.example",
+//     contactPhone: "+92 300 0000001",
+//     idNumber: "35202-0000000-1",
+//     ntnNumber: "1234567-1",
+//     productCount: 48,
+//     tier: "STANDARD",
+//     status: "APPROVED",
+//     documents: docs("maria-b"),
+//     slug: "maria-b",
+//     rating: 4.6,
+//     reviewCount: 5200,
+//     createdAt: "2026-08-02T09:00:00Z",
+//   },
+//   {
+//     id: "noor-jahan",
+//     name: "Noor Jahan",
+//     legalName: "[Legal name]",
+//     contactEmail: "hello@noorjahan.example",
+//     contactPhone: "+92 300 0000002",
+//     idNumber: "42101-0000000-2",
+//     ntnNumber: "2345678-2",
+//     productCount: 31,
+//     tier: "STANDARD",
+//     status: "KYB_PENDING",
+//     documents: [
+//       ...docs("noor-jahan"),
+//       {
+//         id: "noor-jahan-other-1",
+//         type: "OTHER",
+//         status: "UPLOADED",
+//         title: "Trademark certificate",
+//       },
+//     ],
+//     createdAt: "2026-11-03T12:30:00Z",
+//   },
+//   {
+//     id: "monanza",
+//     name: "Monanza",
+//     legalName: "[Legal name]",
+//     contactEmail: "ops@monanza.example",
+//     contactPhone: "+92 300 0000003",
+//     idNumber: "61101-0000000-3",
+//     ntnNumber: "3456789-3",
+//     productCount: 0,
+//     tier: "STANDARD",
+//     status: "CHANGES_REQUESTED",
+//     documents: docs("monanza", {
+//       SALES_TAX_CERTIFICATE: "MISSING",
+//       BRAND_AUTHORIZATION: "REJECTED",
+//     }),
+//     reviewNote: "Sales tax certificate missing; brand authorization letter unsigned.",
+//     createdAt: "2026-10-21T15:10:00Z",
+//   },
+//   {
+//     id: "j-dot",
+//     name: "J.",
+//     legalName: "[Legal name]",
+//     contactEmail: "vendors@j.example",
+//     contactPhone: "+92 300 0000004",
+//     idNumber: "35201-0000000-4",
+//     ntnNumber: "4567890-4",
+//     productCount: 22,
+//     tier: "STANDARD",
+//     status: "SUSPENDED",
+//     documents: docs("j-dot"),
+//     reviewNote: "Suspended pending dispute review.",
+//     createdAt: "2026-06-14T08:45:00Z",
+//   },
+//   {
+//     id: "zarveen-couture",
+//     name: "Zarveen Couture",
+//     legalName: "[Legal name]",
+//     contactEmail: "hello@zarveen.example",
+//     contactPhone: "+92 300 0000005",
+//     idNumber: "35202-0000000-5",
+//     ntnNumber: "5678901-5",
+//     productCount: 64,
+//     tier: "STANDARD",
+//     status: "APPROVED",
+//     documents: docs("zarveen-couture"),
+//     slug: "zarveen-couture",
+//     rating: 4.7,
+//     reviewCount: 3000,
+//     activeSale: {
+//       title: "Festive sale",
+//       discountPercent: 20,
+//       startsAt: "2026-11-05T00:00:00Z",
+//       endsAt: "2026-11-20T23:59:00Z",
+//     },
+//     createdAt: "2026-07-10T09:00:00Z",
+//   },
+//   {
+//     id: "noor-e-saba",
+//     name: "Noor-e-Saba",
+//     legalName: "[Legal name]",
+//     contactEmail: "team@noorsaba.example",
+//     contactPhone: "+92 300 0000006",
+//     idNumber: "42101-0000000-6",
+//     ntnNumber: "6789012-6",
+//     productCount: 27,
+//     tier: "STANDARD",
+//     status: "APPROVED",
+//     documents: docs("noor-e-saba"),
+//     slug: "noor-e-saba",
+//     rating: 4.4,
+//     reviewCount: 860,
+//     activeSale: {
+//       title: "Winter edit",
+//       discountPercent: 15,
+//       startsAt: "2026-11-01T00:00:00Z",
+//       endsAt: "2026-11-30T23:59:00Z",
+//     },
+//     createdAt: "2026-08-18T09:00:00Z",
+//   },
+// ];
 
-// Payout details for the mock sellers (sent by the seller during onboarding).
-const PAYOUT_DETAILS: Record<string, Pick<Seller, "bankAccount" | "businessAddress">> = {
-  "maria-b": {
-    bankAccount: { bankName: "Meezan Bank", accountTitle: "[Legal name]", iban: "PK36MEZN0002010100123456" },
-    businessAddress: "Plot 21, Sector 15, Korangi Industrial Area, Karachi",
-  },
-  "monanza": {
-    bankAccount: { bankName: "HBL", accountTitle: "Monanza Apparel (Pvt) Ltd", iban: "PK12HABB0012345678901234" },
-    businessAddress: "45-B, Gulberg III, Lahore",
-  },
-  "noor-jahan": {
-    bankAccount: { bankName: "UBL", accountTitle: "Noor Jahan Textiles", iban: "PK70UNIL0109000212345678" },
-    businessAddress: "12 Mall Road, Rawalpindi",
-  },
-  "j-dot": {
-    bankAccount: { bankName: "Bank Alfalah", accountTitle: "J. Retail (Pvt) Ltd", iban: "PK05ALFH0055001004567890" },
-    businessAddress: "Shahrah-e-Faisal, Karachi",
-  },
-  "zarveen-couture": {
-    bankAccount: { bankName: "Standard Chartered", accountTitle: "Zarveen Couture", iban: "PK36SCBL0000001123456702" },
-    businessAddress: "DHA Phase 6, Lahore",
-  },
-};
+// // Payout details for the mock sellers (sent by the seller during onboarding).
+// const PAYOUT_DETAILS: Record<string, Pick<Seller, "bankAccount" | "businessAddress">> = {
+//   "maria-b": {
+//     bankAccount: { bankName: "Meezan Bank", accountTitle: "[Legal name]", iban: "PK36MEZN0002010100123456" },
+//     businessAddress: "Plot 21, Sector 15, Korangi Industrial Area, Karachi",
+//   },
+//   "monanza": {
+//     bankAccount: { bankName: "HBL", accountTitle: "Monanza Apparel (Pvt) Ltd", iban: "PK12HABB0012345678901234" },
+//     businessAddress: "45-B, Gulberg III, Lahore",
+//   },
+//   "noor-jahan": {
+//     bankAccount: { bankName: "UBL", accountTitle: "Noor Jahan Textiles", iban: "PK70UNIL0109000212345678" },
+//     businessAddress: "12 Mall Road, Rawalpindi",
+//   },
+//   "j-dot": {
+//     bankAccount: { bankName: "Bank Alfalah", accountTitle: "J. Retail (Pvt) Ltd", iban: "PK05ALFH0055001004567890" },
+//     businessAddress: "Shahrah-e-Faisal, Karachi",
+//   },
+//   "zarveen-couture": {
+//     bankAccount: { bankName: "Standard Chartered", accountTitle: "Zarveen Couture", iban: "PK36SCBL0000001123456702" },
+//     businessAddress: "DHA Phase 6, Lahore",
+//   },
+// };
 
-export const SELLERS_MOCK: Seller[] = BASE_SELLERS.map((s) => ({ ...s, ...PAYOUT_DETAILS[s.id] }));
+// export const SELLERS_MOCK: Seller[] = BASE_SELLERS.map((s) => ({ ...s, ...PAYOUT_DETAILS[s.id] }));
