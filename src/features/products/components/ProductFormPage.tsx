@@ -37,6 +37,7 @@ import {
   productUrl,
 } from "../products.helpers";
 import { SeoPreview } from "./SeoPreview";
+import { SELLERS_MOCK } from "@/features/dashboard/dashboard.mock";
 
 type ProductFormPageProps = {
   /** Present when editing an existing product. */
@@ -83,7 +84,9 @@ export default function ProductFormPage({ productId }: ProductFormPageProps) {
   const isEdit = !!productId;
 
   const { product, saving, getProductById, createProduct, updateProduct } = useProductsStore();
-  const { allSellers, fetchSellers } = useSellersStore();
+  // const { allSellers, fetchSellers } = useSellersStore();
+  const { sellers: storeSellers, fetchSellers } = useSellersStore();
+
   const { categories, fetchCategories } = useCategoriesStore();
 
   const [form, setForm] = useState<FormState>(EMPTY);
@@ -120,18 +123,20 @@ export default function ProductFormPage({ productId }: ProductFormPageProps) {
   // Only approved sellers can have products added on their behalf.
   const sellerOptions = useMemo(
     () =>
-      allSellers
+       (storeSellers.length ? storeSellers : SELLERS_MOCK)
         .filter((b) => b.status === "APPROVED" || b.id === form.sellerId)
         .map((b) => ({ value: b.id, label: b.name })),
-    [allSellers, form.sellerId],
+    [storeSellers],
   );
+
+ 
 
   const update = <K extends keyof FormState>(key: K, value: FormState[K]) => {
     setDirty(true);
     setForm((f) => ({ ...f, [key]: value }));
   };
 
-  const sellerName = allSellers.find((b) => b.id === form.sellerId)?.name ?? "";
+  const sellerName = storeSellers.find((b) => b.id === form.sellerId)?.name ?? "";
 
   /** The product's URL: its saved slug, or (new product) what the backend will most likely make. */
   const slugPreview =

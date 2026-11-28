@@ -35,7 +35,9 @@ export default function SettingsPage() {
     homeBanner,
     saveHomeBanner,
   } = useSettingsStore();
-  const { allSellers, fetchSellers } = useSellersStore();
+  // const { allSellers, fetchSellers } = useSellersStore();
+    const { sellers: allSellers, fetchSellers } = useSellersStore();
+
   const { allProducts, fetchProducts } = useProductsStore();
   const [tab, setTab] = useState<SettingsTab>("PAGES");
 
