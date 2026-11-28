@@ -113,3 +113,55 @@ export function getParentOptions(list: Category[], selfId?: string) {
 
 
 
+
+
+//new function
+
+export const findCategoryRecursive = (
+  items: Category[],
+  id: string,
+): Category | undefined => {
+  for (const item of items) {
+    if (item.id === id) return item;
+    if (item.children?.length) {
+      const found = findCategoryRecursive(item.children, id);
+      if (found) return found;
+    }
+  }
+  return undefined;
+};
+
+export const replaceCategoryRecursive = (
+  items: Category[],
+  id: string,
+  updater: (cat: Category) => Category,
+): Category[] =>
+  items.map((item) => {
+    if (item.id === id) return updater(item);
+    if (item.children?.length) {
+      return {
+        ...item,
+        children: replaceCategoryRecursive(item.children, id, updater),
+      };
+    }
+    return item;
+  });
+
+export const removeCategoryRecursive = (items: Category[], id: string): Category[] =>
+  items
+    .filter((item) => item.id !== id)
+    .map((item) =>
+      item.children?.length
+        ? { ...item, children: removeCategoryRecursive(item.children, id) }
+        : item,
+    );
+
+    export const hasChildrenRecursive = (
+  items: Category[],
+  id: string,
+  fallbackHasChildren: (cats: Category[], targetId: string) => boolean,
+): boolean => {
+  const target = findCategoryRecursive(items, id);
+  if (target?.children?.length) return true;
+  return fallbackHasChildren(items, id);
+};

@@ -19,7 +19,7 @@ parentId?: string | null
       params.append("parentId", parentId);
     }
 
-const res = await http.get<GetCategoriesResponse>(`/admin/categories?${params.toString()}`);
+const res = await http.get<GetCategoriesResponse>(`/admin/categories/tree?${params.toString()}`);
 
     console.log(res.data,"[Get Categories]")
     return res.data;

@@ -33,6 +33,7 @@ import {
   productStatusToneMap,
 } from "../products.helpers";
 import { ProductReviewPanel } from "./ProductReviewPanel";
+import { SELLERS_MOCK } from "@/features/dashboard/dashboard.mock";
 
 const ALL = "ALL";
 const PAGE_SIZE = 10;
@@ -49,9 +50,9 @@ export default function ProductsListPage() {
     approveProduct,
     rejectProduct,
   } = useProductsStore();
-  const { allSellers, fetchSellers } = useSellersStore();
+  // const { allSellers, fetchSellers } = useSellersStore();
   const { categories, fetchCategories } = useCategoriesStore();
-
+const { sellers: storeSellers, fetchSellers } = useSellersStore();
   const [tab, setTab] = useState<ProductStatus | typeof ALL>("SUBMITTED");
   const [search, setSearch] = useState("");
   const [sellerId, setSellerId] = useState(ALL);
@@ -64,10 +65,15 @@ export default function ProductsListPage() {
     setPage(1);
   }, [tab, search, sellerId, categoryId]);
 
-  useEffect(() => {
-    fetchSellers();
-    fetchCategories();
-  }, [fetchSellers, fetchCategories]);
+  // useEffect(() => {
+  //   fetchSellers();
+  //   fetchCategories();
+  // }, [fetchSellers, fetchCategories]);
+
+  const allSellers = useMemo(
+    () => (storeSellers.length ? storeSellers : SELLERS_MOCK),
+    [storeSellers],
+  );
 
   useEffect(() => {
     const t = setTimeout(() => {

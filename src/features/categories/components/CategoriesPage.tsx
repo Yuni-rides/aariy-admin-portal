@@ -13,7 +13,7 @@ import {
   canHaveChildren,
   getSiblings,
 } from "../categories.helpers";
-import { CreateCategoryDto } from "../categories.types";
+import { Category, CreateCategoryDto } from "../categories.types";
 import { CategoryTree } from "./CategoryTree";
 import { CategoryEditor } from "./CategoryEditor";
 import { ReorderSiblingsModal } from "./ReorderSiblingsModal";
@@ -40,6 +40,40 @@ export default function CategoriesPage() {
   const [deleteOpen, setDeleteOpen] = useState(false);
   const [reorderOpen, setReorderOpen] = useState(false);
 
+
+  const findCategoryById = (
+  items: Category[],
+  id: string | null,
+): Category | undefined => {
+  if (!id) return undefined;
+  for (const item of items) {
+    if (item.id === id) return item;
+    if (item.children?.length) {
+      const found = findCategoryById(item.children, id);
+      if (found) return found;
+    }
+  }
+  return undefined;
+};
+
+const flattenCategories = (items: Category[]): Category[] => {
+  const map = new Map<string, Category>();
+
+  const walk = (nodes: Category[]) => {
+    for (const node of nodes) {
+      if (!map.has(node.id)) {
+        map.set(node.id, node);
+      }
+      if (node.children?.length) {
+        walk(node.children);
+      }
+    }
+  };
+
+  walk(items);
+  return Array.from(map.values());
+};
+
   useEffect(() => {
     fetchCategories();
   }, [fetchCategories]);
@@ -51,8 +85,15 @@ export default function CategoriesPage() {
     }
   }, [categories, selectedId, creating]);
 
-  const tree = useMemo(() => buildCategoryTree(categories), [categories]);
-  const selected = categories.find((c) => c.id === selectedId);
+const flatCategories = useMemo(
+  () => flattenCategories(categories),
+  [categories],
+);
+const tree = useMemo(() => buildCategoryTree(flatCategories), [flatCategories]);
+const selected = useMemo(
+  () => findCategoryById(flatCategories, selectedId),
+  [flatCategories, selectedId],
+);
   const siblings = useMemo(
     () => (selected ? getSiblings(categories, selected.parentId) : []),
     [categories, selected],

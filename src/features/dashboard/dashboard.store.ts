@@ -3,10 +3,9 @@ import { useOrdersStore } from "@/features/orders/orders.store";
 import { useSellersStore } from "@/features/sellers/sellers.store";
 import { useProductsStore } from "@/features/products/products.store";
 import { ORDERS_MOCK } from "@/features/orders/orders.mock";
-import { SELLERS_MOCK } from "@/features/sellers/sellers.mock";
 import { PRODUCTS_MOCK } from "@/features/products/products.mock";
 import { DashboardData } from "./dashboard.types";
-import { buildDashboard } from "./dashboard.mock";
+import { buildDashboard, SELLERS_MOCK } from "./dashboard.mock";
 
 type DashboardStore = {
   loading: boolean;
@@ -30,8 +29,9 @@ export const useDashboardStore = create<DashboardStore>((set) => ({
       // set({ data: res.data!, loading: false });
       // The backend must count with the same status filters as the list endpoints (see DashboardStats).
       const orders = useOrdersStore.getState().allOrders;
-      const sellers = useSellersStore.getState().allSellers;
+      const sellers = useSellersStore.getState().sellers;
       const products = useProductsStore.getState().allProducts;
+
       set({
         data: buildDashboard(
           orders.length ? orders : ORDERS_MOCK,

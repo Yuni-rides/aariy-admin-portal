@@ -5,7 +5,7 @@ import {
   UpdateCategoryDto,
 } from "./categories.types";
 // import { CATEGORIES_MOCK } from "./categories.mock";
-import { hasChildren, placeInSiblings, renumberSiblings } from "./categories.helpers";
+import { findCategoryRecursive, hasChildren, hasChildrenRecursive, placeInSiblings, removeCategoryRecursive, renumberSiblings, replaceCategoryRecursive } from "./categories.helpers";
 import { categoryApi } from "./categories.api";
 
 type Result = { success: boolean; message: string };
@@ -53,6 +53,9 @@ export const useCategoriesStore = create<CategoriesStore>((set, get) => ({
     set({ loading: true, error: null });
     try {
 var res= await categoryApi.getCategories(page,limit)
+
+
+console.log(Array.isArray(res?.data?.data));
     const rawList = Array.isArray(res)
       ? res
       : Array.isArray(res?.data)
@@ -61,18 +64,6 @@ var res= await categoryApi.getCategories(page,limit)
           ? res.data.data
           : [];
 
-    // console.log("Extracted Array:", rawList); // <-- Yahan Array(10) aana chahiye
-
-    // const normalizedList = rawList.map((item: any) => ({
-    //   ...item,
-    //   parentId: item.parentId ?? null,
-    //   // imageUrl: item.imageUrl ?? item.image ?? null,
-    //   // showInMenu: item.showInMenu ?? true,
-    //   // isActive: item.isActive ?? true,
-    //   isCurated: item.isCurated ?? false,
-    //   sortOrder: item.sortOrder ?? 0,
-    //   productCount: item.productCount ?? 0,
-    // }));
 
 
     // console.log("[RAW LIST",normalizedList)
@@ -166,7 +157,7 @@ try {
   },
 updateCategory: async (id: string, dto: UpdateCategoryDto) => {
   const { categories } = get();
-  const current = categories.find((c) => c.id === id);
+  const current = findCategoryRecursive(categories, id);
   if (!current) return { success: false, message: "Category not found" };
 
   const parentId =
@@ -214,11 +205,10 @@ updateCategory: async (id: string, dto: UpdateCategoryDto) => {
             dto.imageKey !== undefined ? dto.imageKey : current.imageKey,
           sortOrder: dto.sortOrder ?? current.sortOrder,
           isActive: dto.isActive ?? current.isActive,
-          // isIndexable: dto.isIndexable ?? current.isIndexable,
         };
 
     const moved = parentId !== current.parentId;
-    let next = categories.map((c) => (c.id === id ? updatedItem : c));
+    let next = replaceCategoryRecursive(categories, id, () => updatedItem);
 
     if (moved) {
       next = renumberSiblings(next, current.parentId);
@@ -230,7 +220,6 @@ updateCategory: async (id: string, dto: UpdateCategoryDto) => {
       parentId,
       updatedItem.sortOrder ??
         (moved ? Number.MAX_SAFE_INTEGER : current.sortOrder),
-        
     );
 
     set({ categories: next, saving: false });
@@ -247,42 +236,41 @@ updateCategory: async (id: string, dto: UpdateCategoryDto) => {
     return { success: false, message };
   }
 },
-  deleteCategory: async (id) => {
-    const { categories } = get();
-    const current = categories.find((c) => c.id === id);
-    if (!current) return { success: false, message: "Category not found" };
-    if (current.productCount > 0) {
-      return {
-        success: false,
-        message: "A category with products can be hidden, not deleted",
-      };
-    }
-    if (hasChildren(categories, id)) {
-      return {
-        success: false,
-        message: "Remove or move its sub-categories first",
-      };
-    }
+ deleteCategory: async (id) => {
+  const { categories } = get();
+  const current = findCategoryRecursive(categories, id);
+  if (!current) return { success: false, message: "Category not found" };
 
+  if (current.productCount > 0) {
+    return {
+      success: false,
+      message: "A category with products can be hidden, not deleted",
+    };
+  }
 
-try {
-  await categoryApi.deleteCategory(id); // DELETE /admin/categories/:id
+  if (hasChildrenRecursive(categories, id, hasChildren)) {
+    return {
+      success: false,
+      message: "Remove or move its sub-categories first",
+    };
+  }
 
-  // TODO(api): const res = await categoriesApi.deleteCategory(id);
-    set({ categories: categories.filter((c) => c.id !== id) });
+  set({ saving: true });
+  try {
+    await categoryApi.deleteCategory(id); // DELETE /admin/categories/:id
+
+    set({
+      categories: removeCategoryRecursive(categories, id),
+      saving: false,
+    });
     return { success: true, message: `${current.name} deleted` };
-}catch (e:any) {
-  set({ saving: false });
+  } catch (e: any) {
+    set({ saving: false });
     const message =
       e?.response?.data?.message ?? "Failed to delete category";
     return { success: false, message };
-}
-
-
-
-
-    
-  },
+  }
+},
   
 
 
