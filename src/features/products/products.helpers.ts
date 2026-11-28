@@ -10,7 +10,7 @@ export const productStatusLabelMap: Record<ProductStatus, string> = {
 };
 
 export const productStatusToneMap: Record<ProductStatus, StatusTone> = {
-  DRAFT: "neutral",
+  DRAFT: "warning",
   SUBMITTED: "warning",
   APPROVED: "success",
   REJECTED: "danger",
@@ -20,6 +20,7 @@ export const PRODUCT_TABS: { value: ProductStatus | "ALL"; label: string }[] = [
   { value: "SUBMITTED", label: "Submitted" },
   { value: "APPROVED", label: "Approved" },
   { value: "REJECTED", label: "Rejected" },
+  { value: "DRAFT", label: "Draft" },
   { value: "ALL", label: "All" },
 ];
 

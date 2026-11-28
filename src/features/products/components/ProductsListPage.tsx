@@ -10,16 +10,7 @@ import { Input } from "@/components/ui/Input";
 import { Label } from "@/components/ui/Label";
 import { Pagination } from "@/components/ui/Pagination";
 import { StatusBadge } from "@/components/ui/StatusBadge";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/Table";
-import { toast } from "@/hooks/useToast";
-import { downloadCsv, formatPKR } from "@/lib/format";
+import { downloadCsv } from "@/lib/format";
 import { cn } from "@/lib/utils";
 import { useSellersStore } from "@/features/sellers/sellers.store";
 import { useCategoriesStore } from "@/features/categories/categories.store";
@@ -32,11 +23,13 @@ import {
   productStatusLabelMap,
   productStatusToneMap,
 } from "../products.helpers";
-import { ProductReviewPanel } from "./ProductReviewPanel";
 import { SELLERS_MOCK } from "@/features/dashboard/dashboard.mock";
 
 const ALL = "ALL";
 const PAGE_SIZE = 10;
+
+const actionBtn =
+  "inline-flex h-10 cursor-pointer items-center justify-center rounded-lg border-0 bg-[#FBEDE6] px-4 text-sm font-semibold text-[#1F1A17] no-underline hover:bg-[#F6DDD0]";
 
 export default function ProductsListPage() {
   const {
@@ -45,19 +38,15 @@ export default function ProductsListPage() {
     total,
     limit,
     loading,
-    saving,
     fetchProducts,
-    approveProduct,
-    rejectProduct,
   } = useProductsStore();
   // const { allSellers, fetchSellers } = useSellersStore();
   const { categories, fetchCategories } = useCategoriesStore();
-const { sellers: storeSellers, fetchSellers } = useSellersStore();
+  const { sellers: storeSellers, fetchSellers } = useSellersStore();
   const [tab, setTab] = useState<ProductStatus | typeof ALL>("SUBMITTED");
   const [search, setSearch] = useState("");
   const [sellerId, setSellerId] = useState(ALL);
   const [categoryId, setCategoryId] = useState(ALL);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [page, setPage] = useState(1);
 
   // Any filter change starts again from the first page.
@@ -91,15 +80,12 @@ const { sellers: storeSellers, fetchSellers } = useSellersStore();
     return () => clearTimeout(t);
   }, [page, tab, search, sellerId, categoryId, fetchProducts]);
 
-  // Keep the side panel on a row that is visible in the current view.
-  useEffect(() => {
-    if (!products.some((p) => p.id === selectedId)) {
-      setSelectedId(products[0]?.id ?? null);
-    }
-  }, [products, selectedId]);
-
-  const selected = allProducts.find((p) => p.id === selectedId);
-  const submittedCount = allProducts.filter((p) => p.status === "SUBMITTED").length;
+  const rejectedNotes = products.filter(
+    (p) => p.status === "REJECTED" && p.rejectionReason,
+  );
+  const submittedCount = allProducts.filter(
+    (p) => p.status === "SUBMITTED",
+  ).length;
 
   const sellerOptions = useMemo(
     () => [
@@ -111,22 +97,27 @@ const { sellers: storeSellers, fetchSellers } = useSellersStore();
   const categoryOptions = useMemo(
     () => [
       { value: ALL, label: "All" },
-      ...getLeafCategories(categories).map((c) => ({ value: c.id, label: c.name })),
+      ...getLeafCategories(categories).map((c) => ({
+        value: c.id,
+        label: c.name,
+      })),
     ],
     [categories],
   );
 
-  const notify = (res: { success: boolean; message: string }) =>
-    toast(
-      res.success
-        ? { title: res.message }
-        : { variant: "destructive", title: "Action failed", description: res.message },
-    );
 
   const handleExport = () => {
     downloadCsv(
       "aariy-products.csv",
-      ["Product", "Seller", "Category", "Price (PKR)", "Added by", "Status", "SKUs"],
+      [
+        "Product",
+        "Seller",
+        "Category",
+        "Price (PKR)",
+        "Added by",
+        "Status",
+        "SKUs",
+      ],
       products.map((p) => [
         p.name,
         p.sellerName,
@@ -185,7 +176,10 @@ const { sellers: storeSellers, fetchSellers } = useSellersStore();
       {/* Filters */}
       <div className="flex flex-wrap gap-3">
         <div className="min-w-[180px] flex-1">
-          <Label htmlFor="product-search" className="mb-1.5 block text-[13px] font-normal text-muted-foreground">
+          <Label
+            htmlFor="product-search"
+            className="mb-1.5 block text-[13px] font-normal text-muted-foreground"
+          >
             Search
           </Label>
           <div className="relative">
@@ -199,7 +193,12 @@ const { sellers: storeSellers, fetchSellers } = useSellersStore();
             />
           </div>
         </div>
-        <FilterSelect label="Seller" value={sellerId} options={sellerOptions} onChange={setSellerId} />
+        <FilterSelect
+          label="Seller"
+          value={sellerId}
+          options={sellerOptions}
+          onChange={setSellerId}
+        />
         <FilterSelect
           label="Category"
           value={categoryId}
@@ -208,97 +207,132 @@ const { sellers: storeSellers, fetchSellers } = useSellersStore();
         />
       </div>
 
-      <div className="grid grid-cols-1 items-start gap-4 lg:grid-cols-3">
-        <Card className="rounded-2xl p-[18px] shadow-none lg:col-span-2">
-          <Table>
-            <TableHeader>
-              <TableRow className="hover:bg-transparent">
-                <TableHead>Product</TableHead>
-                <TableHead>Seller</TableHead>
-                <TableHead>Category</TableHead>
-                <TableHead>Price</TableHead>
-                <TableHead>Added by</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="w-0" />
-              </TableRow>
-            </TableHeader>
-            <TableBody>
+      <Card className="rounded-2xl border-[#EADFD8] px-6 pb-5 pt-4 shadow-none">
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[720px] border-collapse text-left">
+            <thead>
+              <tr className="border-b border-[#EADFD8] text-sm text-[#6B5E57]">
+                <th scope="col" className="px-2.5 py-3 font-medium">
+                  Product
+                </th>
+                <th scope="col" className="px-2.5 py-3 font-medium">
+                  Category
+                </th>
+                <th scope="col" className="px-2.5 py-3 font-medium">
+                  Variants
+                </th>
+                <th scope="col" className="px-2.5 py-3 font-medium">
+                  Stock
+                </th>
+                <th scope="col" className="px-2.5 py-3 font-medium">
+                  Added by
+                </th>
+                <th scope="col" className="px-2.5 py-3 font-medium">
+                  Status
+                </th>
+                <th scope="col" className="px-2.5 py-3 text-right font-medium">
+                  Actions
+                </th>
+              </tr>
+            </thead>
+            <tbody className="text-base text-[#1F1A17]">
               {loading && products.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="py-6 text-center">Loading...</TableCell>
-                </TableRow>
-              ) : products.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} className="py-6 text-center">No products found</TableCell>
-                </TableRow>
-              ) : (
-                products.map((product) => (
-                  <TableRow
-                    key={product.id}
-                    className={cn("cursor-pointer", product.id === selectedId && "bg-accent/50")}
-                    onClick={() => setSelectedId(product.id)}
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="py-8 text-center text-sm text-[#6B5E57]"
                   >
-                    <TableCell className="font-medium">{product.name}</TableCell>
-                    <TableCell>{product.sellerName}</TableCell>
-                    <TableCell>{product.categoryName}</TableCell>
-                    <TableCell className="whitespace-nowrap">
-                      {formatPKR(getProductPrice(product))}
-                    </TableCell>
-                    <TableCell>
-                      {product.addedBy === "STAFF" ? (
-                        <StatusBadge tone="info">Aariy staff</StatusBadge>
-                      ) : (
-                        "Seller"
-                      )}
-                    </TableCell>
-                    <TableCell>
-                      <StatusBadge tone={productStatusToneMap[product.status]}>
-                        {productStatusLabelMap[product.status]}
-                      </StatusBadge>
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant={product.status === "SUBMITTED" ? "default" : "secondary"}
-                        size="sm"
-                        className="cursor-pointer rounded-[10px]"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          setSelectedId(product.id);
-                        }}
-                      >
-                        {product.status === "SUBMITTED" ? "Review" : "View"}
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))
+                    Loading...
+                  </td>
+                </tr>
+              ) : products.length === 0 ? (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="py-8 text-center text-sm text-[#6B5E57]"
+                  >
+                    No products found
+                  </td>
+                </tr>
+              ) : (
+                products.map((product) => {
+                  const stock = product.variants.reduce(
+                    (sum, v) => sum + (v.stock || 0),
+                    0,
+                  );
+                  return (
+                    <tr
+                      key={product.id}
+                      className="border-b border-[#EADFD8] last:border-b-0"
+                    >
+                      <td className="px-2.5 py-4 font-semibold">
+                        {product.name}
+                      </td>
+                      <td className="px-2.5 py-4">{product.categoryName}</td>
+                      <td className="px-2.5 py-4 tabular-nums">
+                        {product.variants.length}
+                      </td>
+                      <td className="px-2.5 py-4 tabular-nums">{stock}</td>
+                      <td className="px-2.5 py-4">
+                        {product.addedBy === "STAFF"
+                          ? "Aariy staff"
+                          : product.sellerName}
+                      </td>
+                      <td className="px-2.5 py-4">
+                        <StatusBadge
+                          tone={productStatusToneMap[product.status]}
+                        >
+                          {productStatusLabelMap[product.status]}
+                        </StatusBadge>
+                      </td>
+                      <td className="px-2.5 py-4">
+                        <div className="flex justify-end gap-2">
+                          <Link
+                            href={`/products/${product.id}/edit`}
+                            className={actionBtn}
+                          >
+                            Edit
+                          </Link>
+                          <Link
+                            href={`/products/${product.id}`}
+                            className={actionBtn}
+                          >
+                            View
+                          </Link>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
-            </TableBody>
-          </Table>
-          <Pagination
-            page={page}
-            total={total}
-            limit={limit}
-            onPageChange={setPage}
-          />
-        </Card>
+            </tbody>
+          </table>
+        </div>
 
-        {selected ? (
-          <ProductReviewPanel
-            product={selected}
-            saving={saving}
-            onApprove={async () => notify(await approveProduct(selected.id))}
-            onReject={async (reason) => {
-              const res = await rejectProduct(selected.id, reason);
-              notify(res);
-              return res.success;
-            }}
-          />
-        ) : (
-          <Card className="rounded-2xl p-8 text-center text-sm text-muted-foreground shadow-none">
-            Nothing to review in this view.
-          </Card>
+        {(rejectedNotes.length > 0 ||
+          products.some((p) => p.status === "APPROVED")) && (
+          <div className="mt-4 flex flex-col gap-1 text-sm text-[#6B5E57]">
+            {rejectedNotes.map((p) => (
+              <p key={p.id} className="m-0">
+                {p.name} rejected: &ldquo;{p.rejectionReason}&rdquo; Fix it and
+                submit again.
+              </p>
+            ))}
+            <p className="m-0">
+              Approved products can be edited, but public changes are reviewed
+              again.
+            </p>
+          </div>
         )}
-      </div>
+
+        <Pagination
+          page={page}
+          total={total}
+          limit={limit}
+          onPageChange={setPage}
+        />
+      </Card>
+
     </div>
   );
 }

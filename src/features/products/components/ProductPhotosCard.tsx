@@ -11,13 +11,15 @@ export type FormImage = { url: string; key?: string };
 type ProductPhotosCardProps = {
   images: FormImage[];
   uploading: boolean;
+  /** View mode: show the photos only, no adding, removing or reordering. */
+  readOnly?: boolean;
   error?: string;
   onAdd: (files: File[]) => void;
   onChange: (images: FormImage[]) => void;
 };
 
 /** Photos: first is the cover; drag (or use the arrows) to reorder. */
-export function ProductPhotosCard({ images, uploading, error, onAdd, onChange }: ProductPhotosCardProps) {
+export function ProductPhotosCard({ images, uploading, readOnly, error, onAdd, onChange }: ProductPhotosCardProps) {
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragFrom, setDragFrom] = useState<number | null>(null);
   const [dragOver, setDragOver] = useState<number | null>(null);
@@ -34,13 +36,17 @@ export function ProductPhotosCard({ images, uploading, error, onAdd, onChange }:
     <FormCard
       id="h-img"
       title="Photos"
-      description={`First photo is the cover. Drag to reorder. At least ${MIN_PUBLISH_IMAGES} to publish, up to ${MAX_PRODUCT_IMAGES}.`}
+      description={
+        readOnly
+          ? `First photo is the cover. At least ${MIN_PUBLISH_IMAGES} are needed to publish.`
+          : `First photo is the cover. Drag to reorder. At least ${MIN_PUBLISH_IMAGES} to publish, up to ${MAX_PRODUCT_IMAGES}.`
+      }
     >
       <ul className="grid list-none grid-cols-3 gap-2.5 p-0">
         {images.map((img, i) => (
           <li
             key={img.url}
-            draggable
+            draggable={!readOnly}
             onDragStart={() => setDragFrom(i)}
             onDragOver={(e) => {
               e.preventDefault();
@@ -58,7 +64,8 @@ export function ProductPhotosCard({ images, uploading, error, onAdd, onChange }:
               setDragOver(null);
             }}
             className={cn(
-              "group relative aspect-[3/4] cursor-grab overflow-hidden rounded-lg bg-[#EFE3DB] active:cursor-grabbing",
+              "group relative aspect-[3/4] overflow-hidden rounded-lg bg-[#EFE3DB]",
+              !readOnly && "cursor-grab active:cursor-grabbing",
               dragOver === i && dragFrom !== i && "ring-2 ring-[#A9461F]",
               dragFrom === i && "opacity-50",
             )}
@@ -70,6 +77,7 @@ export function ProductPhotosCard({ images, uploading, error, onAdd, onChange }:
                 Cover
               </span>
             )}
+            {!readOnly && (
             <button
               type="button"
               aria-label={`Remove photo ${i + 1}`}
@@ -78,7 +86,9 @@ export function ProductPhotosCard({ images, uploading, error, onAdd, onChange }:
             >
               <X className="h-3.5 w-3.5" />
             </button>
+            )}
             {/* Keyboard / touch alternative to dragging */}
+            {!readOnly && (
             <div className="absolute bottom-1 right-1 flex gap-1 opacity-0 transition-opacity focus-within:opacity-100 group-hover:opacity-100">
               {i > 0 && (
                 <button
@@ -101,9 +111,10 @@ export function ProductPhotosCard({ images, uploading, error, onAdd, onChange }:
                 </button>
               )}
             </div>
+            )}
           </li>
         ))}
-        {images.length < MAX_PRODUCT_IMAGES && (
+        {!readOnly && images.length < MAX_PRODUCT_IMAGES && (
           <li>
             <button
               type="button"
@@ -130,6 +141,7 @@ export function ProductPhotosCard({ images, uploading, error, onAdd, onChange }:
           e.target.value = "";
         }}
       />
+      {readOnly && images.length === 0 && <p className="m-0 text-sm text-[#6B5E57]">No photos added.</p>}
       <FieldError>{error}</FieldError>
     </FormCard>
   );
