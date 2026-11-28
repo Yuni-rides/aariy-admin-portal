@@ -1,5 +1,5 @@
 import { http } from "@/shared/api/http";
-import { ActiveInActiceCategoryResponse, CreateCategoryDto, CreateParentCategoryResponse, DeleteCategoryResponse, GetCategoriesResponse, UpdateCategoryDto } from "./categories.types";
+import { ActiveInActiceCategoryResponse, CategoryField, CreateCategoryDto, CreateParentCategoryResponse, DeleteCategoryResponse, GetCategoriesResponse, UpdateCategoryDto } from "./categories.types";
 
 
 export const categoryApi = {
@@ -81,4 +81,12 @@ const res = await http.get<GetCategoriesResponse>(`/admin/categories/tree?${para
 
 
 
+  /** Fields a product in this (last-level) category fills in. GET /admin/categories/:id/fields */
+  getCategoryFields: async (categoryId: string): Promise<CategoryField[]> => {
+    const res = await http.get<{ status: boolean; message: string; data?: CategoryField[] | { fields?: CategoryField[] } }>(
+      `/admin/categories/${categoryId}/fields`,
+    );
+    const data = res.data?.data;
+    return Array.isArray(data) ? data : data?.fields ?? [];
+  },
 }

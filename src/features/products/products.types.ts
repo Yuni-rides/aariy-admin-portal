@@ -5,18 +5,32 @@ export type ProductAddedBy = "SELLER" | "STAFF";
 
 export type ProductVariant = {
   id: string;
+  /** Value of the first variant field (usually size); kept for lists and search. */
   size: string;
   colour: string;
   sku: string;
   barcode?: string;
+  /** In rupees. TODO(api): sent as priceMinor = price × 100. */
   price: number;
+  /** "Original" price shown struck through; must be above price. TODO(api): compareAtMinor. */
+  compareAtPrice?: number | null;
+  /** TODO(api): stockOnHand. */
   stock: number;
+  /** Values of the category's variant fields, by field code (e.g. { size: "M" }). */
+  options?: Record<string, string>;
 };
 
-export type SizeChartRow = {
-  size: string;
-  chest: string;
-  length: string;
+/** Value of one category field (Product details). */
+export type AttributeValue = string | number | boolean | string[];
+
+/** Needed only before a product can ship abroad. */
+export type ProductCustoms = {
+  hsCode?: string;
+  fibreContent?: string;
+  /** ISO country code, e.g. "PK". */
+  countryOfOrigin?: string;
+  /** In rupees. TODO(api): declaredValueMinor = × 100. */
+  declaredValue?: number | null;
 };
 
 /**
@@ -42,14 +56,27 @@ export type Product = ProductSeo & {
   name: string;
   sellerId: string;
   sellerName: string;
+  /** Each seller has one brand; the product belongs to it. */
+  brandId?: string | null;
+  brandName?: string | null;
   categoryId: string;
   categoryName: string;
   description: string;
   material?: string;
-  dispatchLeadTimeDays?: number;
+  care?: string;
+  /** Days until it is dispatched, as a range (0 to 60). */
+  dispatchMinDays?: number | null;
+  dispatchMaxDays?: number | null;
+  /** Category field values, by field code (non-variant fields only). */
+  attributes?: Record<string, AttributeValue>;
   variants: ProductVariant[];
+  /** Photo URLs, cover first. */
   images: string[];
-  sizeChart: SizeChartRow[];
+  /** Uploaded media keys in the same order as images. TODO(api): sent as imageKeys[]. */
+  imageKeys?: string[];
+  /** Brand size chart used by this product. */
+  sizeChartId?: string | null;
+  customs?: ProductCustoms | null;
   addedBy: ProductAddedBy;
   status: ProductStatus;
   rejectionReason?: string | null;
@@ -65,14 +92,20 @@ export type ProductsFilter = {
 export type SaveProductDto = SaveSeo & {
   name: string;
   sellerId: string;
+  brandId?: string | null;
   categoryId: string;
   description: string;
   material?: string;
-  dispatchLeadTimeDays?: number;
+  care?: string;
+  dispatchMinDays?: number | null;
+  dispatchMaxDays?: number | null;
+  attributes?: Record<string, AttributeValue>;
   variants: ProductVariant[];
   images: string[];
-  sizeChart: SizeChartRow[];
-  /** DRAFT = seller finishes it; APPROVED = live immediately. */
+  imageKeys?: string[];
+  sizeChartId?: string | null;
+  customs?: ProductCustoms | null;
+  /** DRAFT = "Save draft" (publish: false); APPROVED = "Save & publish", live at once (publish: true). */
   status: Extract<ProductStatus, "DRAFT" | "APPROVED">;
 };
 

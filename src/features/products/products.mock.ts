@@ -1,6 +1,6 @@
 // TEMPORARY: mock data until the products API is ready.
 // Delete this file once products.api.ts is wired into the store.
-import { Product, ProductVariant, SizeChartRow } from "./products.types";
+import { Product, ProductVariant } from "./products.types";
 import { productSlug } from "./products.helpers";
 
 const variants = (prefix: string, price: number, colour: string): ProductVariant[] =>
@@ -14,11 +14,8 @@ const variants = (prefix: string, price: number, colour: string): ProductVariant
     stock: [4, 1, 6][i],
   }));
 
-const SIZE_CHART: SizeChartRow[] = [
-  { size: "S", chest: "92", length: "112" },
-  { size: "M", chest: "97", length: "114" },
-  { size: "L", chest: "102", length: "116" },
-];
+/** Size chart ids from sizeCharts.mock.ts. */
+const SIZE_CHART = "sc-kurta-regular";
 
 type MockProduct = Omit<Product, "slug"> & { slug?: string };
 
@@ -35,10 +32,11 @@ const BASE: MockProduct[] = [
     categoryName: "Kurta set",
     description: "Three-piece lawn suit with embroidered neckline.",
     material: "Lawn",
-    dispatchLeadTimeDays: 2,
+    dispatchMinDays: 2,
+    dispatchMaxDays: 4,
     variants: variants("MB-L3", 5000, "Teal"),
     images: ["", "", "", ""],
-    sizeChart: SIZE_CHART,
+    sizeChartId: SIZE_CHART,
     addedBy: "SELLER",
     status: "SUBMITTED",
     createdAt: "2026-11-09T11:00:00Z",
@@ -52,10 +50,11 @@ const BASE: MockProduct[] = [
     categoryName: "Maxi",
     description: "Flowing chiffon maxi with lining.",
     material: "Chiffon",
-    dispatchLeadTimeDays: 3,
+    dispatchMinDays: 3,
+    dispatchMaxDays: 5,
     variants: variants("NJ-CM", 5700, "Blush"),
     images: ["", ""],
-    sizeChart: SIZE_CHART,
+    sizeChartId: SIZE_CHART,
     addedBy: "SELLER",
     status: "SUBMITTED",
     createdAt: "2026-11-08T16:20:00Z",
@@ -69,10 +68,11 @@ const BASE: MockProduct[] = [
     categoryName: "Pishwas",
     description: "Printed pishwas with gota detailing.",
     material: "Cotton",
-    dispatchLeadTimeDays: 2,
+    dispatchMinDays: 2,
+    dispatchMaxDays: 4,
     variants: variants("J-PP", 4200, "Mustard"),
     images: ["", "", ""],
-    sizeChart: [],
+    sizeChartId: null,
     addedBy: "STAFF",
     status: "APPROVED",
     createdAt: "2026-10-30T10:00:00Z",
@@ -86,10 +86,11 @@ const BASE: MockProduct[] = [
     categoryName: "Sharara",
     description: "Two-piece cotton sharara set.",
     material: "Cotton",
-    dispatchLeadTimeDays: 4,
+    dispatchMinDays: 4,
+    dispatchMaxDays: 7,
     variants: variants("MZ-CS", 3900, "White"),
     images: [""],
-    sizeChart: [],
+    sizeChartId: null,
     addedBy: "SELLER",
     status: "REJECTED",
     rejectionReason: "Images are low resolution; size chart missing.",
@@ -133,10 +134,11 @@ BASE.push(
       categoryName,
       description: `${name}.`,
       material: "Cotton",
-      dispatchLeadTimeDays: 2 + (i % 4),
+      dispatchMinDays: 2 + (i % 4),
+      dispatchMaxDays: 5 + (i % 4),
       variants: variants(`${code}-X${i + 1}`, 3500 + (i % 7) * 400, "Assorted"),
       images: ["", ""],
-      sizeChart: i % 2 ? SIZE_CHART : [],
+      sizeChartId: i % 2 ? SIZE_CHART : null,
       addedBy: i % 6 === 0 ? "STAFF" : "SELLER",
       status,
       rejectionReason: status === "REJECTED" ? "Images do not match the product title." : null,
@@ -168,10 +170,11 @@ BASE.push(
     categoryName: CATS[i % CATS.length][1],
     description: `${name}.`,
     material: "Chiffon",
-    dispatchLeadTimeDays: 5,
+    dispatchMinDays: 5,
+    dispatchMaxDays: 10,
     variants: variants(code, price, "Assorted"),
     images: [],
-    sizeChart: SIZE_CHART,
+    sizeChartId: SIZE_CHART,
     addedBy: "SELLER",
     status: "APPROVED",
     rejectionReason: null,
